@@ -1,1411 +1,2367 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dishcover — AI Recipe Finder</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dishcover — AI Recipe Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-  :root {
-    /* ── Premium Sage Glass palette ─────────── */
-    --accent:      #708d70;
-    --accent-2:    #4e664e;
-    --accent-soft: rgba(112, 141, 112, 0.12);
-    --accent-glow: rgba(112, 141, 112, 0.25);
+    :root {
+      /* ── Premium Sage Glass palette ─────────── */
+      --accent: #708d70;
+      --accent-2: #4e664e;
+      --accent-soft: rgba(112, 141, 112, 0.12);
+      --accent-glow: rgba(112, 141, 112, 0.25);
 
-    --text:   #212821;
-    --text2:  #5c665c;
-    --text3:  #94a194;
+      --text: #212821;
+      --text2: #5c665c;
+      --text3: #94a194;
 
-    --green:      #5d8f6d;
-    --green-dim:  rgba(93, 143, 109, 0.12);
-    --red:        #bf5b4b;
-    --red-dim:    rgba(191, 91, 75, 0.12);
-    --blue:       #547fa8;
-    --blue-dim:   rgba(84, 127, 168, 0.12);
+      --green: #5d8f6d;
+      --green-dim: rgba(93, 143, 109, 0.12);
+      --red: #bf5b4b;
+      --red-dim: rgba(191, 91, 75, 0.12);
+      --blue: #547fa8;
+      --blue-dim: rgba(84, 127, 168, 0.12);
 
-    /* glass surfaces — translucent, blurred */
-    --glass:        rgba(255, 255, 255, 0.40);
-    --glass-strong: rgba(255, 255, 255, 0.60);
-    --glass-light:  rgba(255, 255, 255, 0.78);
-    --tag-bg:       rgba(255, 255, 255, 0.45);
+      /* glass surfaces — translucent, blurred */
+      --glass: rgba(255, 255, 255, 0.40);
+      --glass-strong: rgba(255, 255, 255, 0.60);
+      --glass-light: rgba(255, 255, 255, 0.78);
+      --tag-bg: rgba(255, 255, 255, 0.45);
 
-    --border:  rgba(112, 141, 112, 0.10);
-    --border2: rgba(112, 141, 112, 0.18);
+      --border: rgba(112, 141, 112, 0.10);
+      --border2: rgba(112, 141, 112, 0.18);
 
-    --shadow-sm: 0 4px 18px rgba(90, 110, 90, 0.04);
-    --shadow:    0 16px 48px rgba(90, 110, 90, 0.08);
-    --shadow-lg: 0 32px 90px rgba(90, 110, 90, 0.14);
-    --edge:      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      --shadow-sm: 0 4px 18px rgba(90, 110, 90, 0.04);
+      --shadow: 0 16px 48px rgba(90, 110, 90, 0.08);
+      --shadow-lg: 0 32px 90px rgba(90, 110, 90, 0.14);
+      --edge: inset 0 1px 0 rgba(255, 255, 255, 0.55);
 
-    --radius:    24px;
-    --radius-sm: 16px;
-    --blur: blur(28px);
-  }
+      --radius: 24px;
+      --radius-sm: 16px;
+      --blur: blur(28px);
+    }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 15px; }
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-weight: 400;
-    color: var(--text);
-    min-height: 100vh;
-    line-height: 1.6;
-    background:
-      radial-gradient(circle at 10% 6%, rgba(168, 196, 168, 0.35), transparent 45%),
-      radial-gradient(circle at 90% 14%, rgba(180, 208, 222, 0.35), transparent 40%),
-      radial-gradient(circle at 55% 100%, rgba(240, 212, 200, 0.25), transparent 48%),
-      #f7f9f7;
-    background-attachment: fixed;
-  }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* ── Layout ─────────────────────────── */
-  .app { display: flex; flex-direction: column; min-height: 100vh; }
+    html {
+      font-size: 15px;
+    }
 
-  /* ── Header (glass) ─────────────────── */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 2rem;
-    height: 64px;
-    border-bottom: 1px solid var(--border);
-    background: var(--glass-strong);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: var(--edge), 0 1px 0 rgba(60,46,20,0.04);
-    position: sticky; top: 0; z-index: 100;
-  }
-  .logo {
-    font-family: 'Inter', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: var(--text);
-    display: flex; align-items: center; gap: 0.55rem;
-  }
-  .logo-dot {
-    width: 8px; height: 8px; background: var(--accent); border-radius: 50%;
-    display: inline-block; box-shadow: 0 0 0 5px var(--accent-soft);
-  }
-  .header-tabs { display: flex; gap: 4px; background: var(--glass); padding: 4px; border-radius: 50px; border: 1px solid var(--border); }
-  .tab-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text2); font-family: 'Inter', sans-serif;
-    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
-    padding: 7px 16px; border-radius: 50px;
-    transition: all 0.18s ease;
-  }
-  .tab-btn:hover { color: var(--text); }
-  .tab-btn.active { color: #fff; background: var(--accent); box-shadow: var(--shadow-sm); }
-  .header-right { display: flex; align-items: center; gap: 0.75rem; }
-  .prefs-btn {
-    background: var(--glass); border: 1px solid var(--border);
-    color: var(--text2); cursor: pointer; border-radius: 50px;
-    font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 600;
-    padding: 7px 14px; display: flex; align-items: center; gap: 6px;
-    transition: all 0.15s; backdrop-filter: var(--blur);
-  }
-  .prefs-btn:hover { border-color: var(--accent); color: var(--accent-2); }
-  .prefs-count {
-    background: var(--accent); color: #fff;
-    border-radius: 50%; width: 18px; height: 18px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.68rem; font-weight: 700;
-  }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-weight: 400;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      background:
+        radial-gradient(circle at 10% 6%, rgba(168, 196, 168, 0.35), transparent 45%),
+        radial-gradient(circle at 90% 14%, rgba(180, 208, 222, 0.35), transparent 40%),
+        radial-gradient(circle at 55% 100%, rgba(240, 212, 200, 0.25), transparent 48%),
+        #f7f9f7;
+      background-attachment: fixed;
+    }
 
-  /* ── Main content ────────────────────── */
-  .main { flex: 1; display: flex; flex-direction: column; }
+    /* ── Layout ─────────────────────────── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
 
-  /* ── Search View ─────────────────────── */
-  .search-view { padding: 2rem 2rem 1.5rem; flex: 1; max-width: 1180px; margin: 0 auto; width: 100%; }
-  .search-hero { margin-bottom: 1.75rem; }
-  .search-hero h1 {
-    font-family: 'Inter', sans-serif; font-size: 2.1rem;
-    font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1.15; margin-bottom: 0.4rem;
-  }
-  .search-hero h1 em { font-style: normal; color: var(--accent-2); }
-  .search-hero p { color: var(--text2); font-size: 0.92rem; }
+    /* ── Header (glass) ─────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      background: var(--glass-strong);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--edge), 0 1px 0 rgba(60, 46, 20, 0.04);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  /* Search bar (glass) */
-  .search-bar-wrap { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
-  .search-input-wrap {
-    flex: 1; display: flex; align-items: center;
-    background: var(--glass); border: 1px solid var(--border);
-    border-radius: 50px; overflow: hidden;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: var(--edge);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .search-input-wrap:focus-within { border-color: var(--accent); box-shadow: var(--edge), 0 0 0 4px var(--accent-soft); }
-  .search-icon { padding: 0 0.4rem 0 1.1rem; color: var(--text3); font-size: 1rem; }
-  .search-input {
-    flex: 1; background: none; border: none; outline: none;
-    color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.9rem;
-    padding: 0.75rem 0; min-width: 0;
-  }
-  .search-input::placeholder { color: var(--text3); }
-  .search-btn {
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.85rem;
-    padding: 0 1.5rem; border-radius: 50px; margin: 4px;
-    transition: background 0.15s; white-space: nowrap;
-  }
-  .search-btn:hover { background: var(--accent-2); }
+    .logo {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+    }
 
-  /* Filters (glass) */
-  .filters-row {
-    display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
-    padding: 0.85rem 1rem; background: var(--glass); border: 1px solid var(--border);
-    border-radius: var(--radius); margin-bottom: 1.75rem;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: var(--edge);
-  }
-  .filter-label { color: var(--text3); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-right: 0.2rem; }
-  .filter-group { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
-  .filter-divider { width: 1px; height: 18px; background: var(--border2); margin: 0 0.3rem; }
-  .filter-chip {
-    background: var(--tag-bg); border: 1px solid var(--border); color: var(--text2);
-    border-radius: 50px; font-size: 0.78rem; font-weight: 500;
-    padding: 5px 13px; cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .filter-chip:hover { border-color: var(--border2); color: var(--text); }
-  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .time-filter { display: flex; align-items: center; gap: 0.5rem; }
-  .time-filter label { color: var(--text2); font-size: 0.78rem; white-space: nowrap; }
-  .double-slider-container {
-    position: relative;
-    width: 140px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    margin: 0 0.4rem;
-  }
-  .double-slider-track {
-    position: absolute;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(112, 141, 112, 0.15);
-    width: 100%;
-    z-index: 1;
-  }
-  .double-slider-range {
-    position: absolute;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--accent);
-    z-index: 2;
-  }
-  .double-slider-input {
-    position: absolute;
-    width: 100%;
-    height: 4px;
-    background: none;
-    pointer-events: none;
-    -webkit-appearance: none;
-    appearance: none;
-    z-index: 3;
-    outline: none;
-    margin: 0;
-  }
-  .double-slider-input::-webkit-slider-thumb {
-    height: 14px;
-    width: 14px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid var(--accent);
-    cursor: pointer;
-    pointer-events: auto;
-    -webkit-appearance: none;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    transition: transform 0.1s ease;
-  }
-  .double-slider-input::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-  }
-  .time-values {
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--text2);
-    white-space: nowrap;
-    min-width: 80px;
-    text-align: center;
-  }
-  .clear-filters {
-    background: none; border: none; color: var(--red); cursor: pointer;
-    font-size: 0.75rem; font-weight: 600; margin-left: auto;
-    padding: 5px 10px; border-radius: 50px; transition: background 0.15s;
-  }
-  .clear-filters:hover { background: var(--red-dim); }
-  .add-ingredient-inline {
-    display: inline-flex;
-    align-items: center;
-    background: var(--tag-bg);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 2px 4px 2px 10px;
-    height: 26px;
-    transition: border-color 0.15s;
-    vertical-align: middle;
-  }
-  .add-ingredient-inline:focus-within {
-    border-color: var(--accent);
-  }
-  .add-ingredient-inline input {
-    background: none;
-    border: none;
-    outline: none;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.76rem;
-    color: var(--text);
-    width: 80px;
-  }
-  .add-ingredient-inline input::placeholder {
-    color: var(--text3);
-  }
-  .add-ingredient-inline button {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.8rem;
-    font-weight: 700;
-    transition: background 0.15s;
-    padding: 0;
-  }
-  .add-ingredient-inline button:hover {
-    background: var(--accent-2);
-  }
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 5px var(--accent-soft);
+    }
 
-  /* Results */
-  .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-  .results-count { color: var(--text2); font-size: 0.82rem; }
-  .results-count strong { color: var(--accent-2); }
-  .sort-select {
-    background: var(--glass); border: 1px solid var(--border); color: var(--text2);
-    border-radius: var(--radius-sm); font-size: 0.78rem; padding: 6px 12px;
-    cursor: pointer; outline: none; font-family: 'Inter', sans-serif;
-    backdrop-filter: var(--blur);
-  }
+    .header-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--glass);
+      padding: 4px;
+      border-radius: 50px;
+      border: 1px solid var(--border);
+    }
 
-  .recipe-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-    gap: 1.1rem;
-  }
+    .tab-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text2);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      padding: 7px 16px;
+      border-radius: 50px;
+      transition: all 0.18s ease;
+    }
 
-  /* Recipe Card (glass) */
-  .recipe-card {
-    background: var(--glass); border: 1px solid var(--border);
-    border-radius: var(--radius); overflow: hidden;
-    transition: all 0.2s ease; cursor: pointer;
-    display: flex; flex-direction: column;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: var(--edge), var(--shadow-sm);
-  }
-  .recipe-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: var(--edge), var(--shadow); }
-  .recipe-card.liked { border-color: var(--green); box-shadow: var(--edge), 0 0 0 3px var(--green-dim); }
-  .recipe-card.disliked { opacity: 0.45; }
-  .card-top { padding: 1.1rem 1.1rem 0.75rem; flex: 1; display: flex; flex-direction: column; }
-  .card-meta { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.65rem; flex-wrap: wrap; }
-  .cuisine-badge {
-    font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-    padding: 3px 9px; border-radius: 50px;
-    background: var(--accent-soft); color: var(--accent-2);
-  }
-  .diet-tag { font-size: 0.66rem; padding: 3px 8px; border-radius: 50px; font-weight: 600; }
-  .diet-tag.vegan { background: var(--green-dim); color: var(--green); }
-  .diet-tag.vegetarian { background: var(--green-dim); color: var(--green); }
-  .diet-tag.gluten-free { background: var(--blue-dim); color: var(--blue); }
-  .card-title {
-    font-family: 'Inter', sans-serif; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.01em;
-    color: var(--text); line-height: 1.3; margin-bottom: 0.5rem; flex: 1;
-  }
-  .card-ingredients {
-    color: var(--text2); font-size: 0.78rem; line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; margin-bottom: 0.75rem;
-  }
-  .card-bottom {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0.65rem 1.1rem;
-    border-top: 1px solid var(--border);
-    background: rgba(255,255,255,0.25);
-  }
-  .card-time { color: var(--text3); font-size: 0.76rem; display: flex; align-items: center; gap: 4px; }
-  .card-actions { display: flex; gap: 6px; }
-  .action-btn {
-    background: var(--glass-light); border: 1px solid var(--border); border-radius: 50%;
-    width: 30px; height: 30px; cursor: pointer; display: flex;
-    align-items: center; justify-content: center; font-size: 0.82rem;
-    transition: all 0.15s; color: var(--text2);
-  }
-  .action-btn:hover { border-color: var(--border2); }
-  .action-btn.like.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-  .action-btn.dislike.active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
-  .action-btn.save.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-2); }
+    .tab-btn:hover {
+      color: var(--text);
+    }
 
-  .no-results { text-align: center; padding: 4rem 2rem; color: var(--text2); }
-  .no-results .icon { font-size: 3rem; margin-bottom: 1rem; }
-  .no-results h3 { font-size: 1.1rem; color: var(--text); margin-bottom: 0.4rem; font-weight: 700; }
+    .tab-btn.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
 
-  /* ── Chat View ──────────────────────── */
-  .chat-view { display: flex; flex-direction: column; height: calc(100vh - 64px); max-width: 880px; margin: 0 auto; width: 100%; }
-  .chat-messages {
-    flex: 1; overflow-y: auto; padding: 1.75rem 2rem;
-    display: flex; flex-direction: column; gap: 1.25rem;
-  }
-  .chat-messages::-webkit-scrollbar { width: 6px; }
-  .chat-messages::-webkit-scrollbar-track { background: transparent; }
-  .chat-messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
 
-  .msg { display: flex; gap: 0.75rem; max-width: 820px; }
-  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
-  .msg-avatar {
-    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.85rem; font-weight: 700; margin-top: 2px;
-  }
-  .msg.ai .msg-avatar { background: var(--accent-soft); color: var(--accent-2); border: 1px solid var(--accent); }
-  .msg.user .msg-avatar { background: var(--glass-light); border: 1px solid var(--border); color: var(--text2); }
-  .msg-body { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-  .msg-bubble {
-    padding: 0.8rem 1.05rem; border-radius: var(--radius-sm);
-    font-size: 0.9rem; line-height: 1.6;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    box-shadow: var(--edge);
-  }
-  .msg.ai .msg-bubble { background: var(--glass); border: 1px solid var(--border); color: var(--text); }
-  .msg.user .msg-bubble { background: var(--accent-soft); border: 1px solid rgba(112, 141, 112, 0.25); color: var(--text); }
-  .msg-time { color: var(--text3); font-size: 0.72rem; padding: 0 0.25rem; }
-  .msg.user .msg-time { text-align: right; }
+    .prefs-btn {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      cursor: pointer;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+      backdrop-filter: var(--blur);
+    }
 
-  .ai-reasoning {
-    background: rgba(255,255,255,0.35); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-    border-radius: var(--radius-sm); padding: 0.6rem 0.9rem; font-size: 0.8rem;
-    color: var(--text2); font-style: normal; margin-bottom: 0.25rem;
-  }
-  .ai-reasoning strong { color: var(--accent-2); font-weight: 700; }
+    .prefs-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent-2);
+    }
 
-  .chat-recipes { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.25rem; }
-  .chat-recipe-card {
-    background: var(--glass-light); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 0.75rem 1rem;
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 1rem; cursor: pointer; transition: all 0.15s;
-    box-shadow: var(--edge);
-  }
-  .chat-recipe-card:hover { border-color: var(--border2); background: #fff; }
-  .chat-recipe-left { flex: 1; min-width: 0; }
-  .chat-recipe-title {
-    font-family: 'Inter', sans-serif; font-size: 0.92rem; font-weight: 700;
-    color: var(--text); margin-bottom: 0.2rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .chat-recipe-meta { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-  .chat-recipe-score {
-    font-family: ui-monospace, 'SF Mono', monospace; font-size: 0.68rem;
-    color: var(--accent-2); background: var(--accent-soft);
-    padding: 2px 8px; border-radius: 50px;
-  }
-  .chat-recipe-open {
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    font-size: 0.75rem; font-weight: 600; padding: 6px 14px;
-    border-radius: 50px; white-space: nowrap; flex-shrink: 0;
-    font-family: 'Inter', sans-serif; transition: background 0.15s;
-  }
-  .chat-recipe-open:hover { background: var(--accent-2); }
+    .prefs-count {
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
 
-  .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 0.4rem 0; }
-  .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); animation: bounce 1.2s infinite; }
-  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+    /* ── Main content ────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
 
-  .chat-input-area { border-top: 1px solid var(--border); padding: 1rem 2rem 1.5rem; background: rgba(255,255,255,0.3); }
-  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
-  .suggestion-pill {
-    background: var(--glass-light); border: 1px solid var(--border); color: var(--text2);
-    border-radius: 50px; font-size: 0.75rem; padding: 6px 13px;
-    cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
-  }
-  .suggestion-pill:hover { border-color: var(--accent); color: var(--accent-2); background: var(--accent-soft); }
-  .chat-input-row { display: flex; gap: 0.5rem; }
-  .chat-input {
-    flex: 1; background: var(--glass); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-family: 'Inter', sans-serif; font-size: 0.9rem;
-    padding: 0.75rem 1rem; outline: none; resize: none;
-    transition: border-color 0.15s; line-height: 1.5; max-height: 120px;
-    backdrop-filter: var(--blur);
-  }
-  .chat-input:focus { border-color: var(--accent); }
-  .chat-input::placeholder { color: var(--text3); }
-  .chat-send {
-    background: var(--accent); color: #fff; border: none; cursor: pointer;
-    border-radius: var(--radius-sm); padding: 0 1.4rem; font-size: 1.1rem;
-    transition: background 0.15s; align-self: stretch;
-    display: flex; align-items: center;
-  }
-  .chat-send:hover { background: var(--accent-2); }
-  .chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* ── Search View ─────────────────────── */
+    .search-view {
+      padding: 2rem 2rem 1.5rem;
+      flex: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-  /* ── Recipe Detail Modal (glass) ─────────────── */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(60,46,20,0.18);
-    z-index: 200; display: flex; align-items: center; justify-content: center;
-    padding: 1rem; backdrop-filter: blur(6px);
-    animation: fadeIn 0.15s ease;
-  }
-  .modal-overlay.hidden { display: none; }
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  .modal {
-    background: var(--glass-strong); border: 1px solid var(--border2);
-    border-radius: 24px; max-width: 660px; width: 100%; max-height: 88vh;
-    overflow-y: auto; box-shadow: var(--edge), var(--shadow-lg);
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    animation: slideUp 0.2s ease;
-  }
-  @keyframes slideUp { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
-  .modal::-webkit-scrollbar { width: 6px; }
-  .modal::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-  .modal-header {
-    padding: 1.6rem 1.6rem 1.1rem;
-    border-bottom: 1px solid var(--border); position: sticky; top: 0;
-    background: var(--glass-strong); z-index: 1;
-    display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-  }
-  .modal-header-left { flex: 1; }
-  .modal-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; }
-  .modal-title { font-family: 'Inter', sans-serif; font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); line-height: 1.2; }
-  .modal-close {
-    background: var(--glass-light); border: 1px solid var(--border); color: var(--text2);
-    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-    font-size: 1rem; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: all 0.15s;
-  }
-  .modal-close:hover { border-color: var(--red); color: var(--red); }
-  .modal-body { padding: 1.6rem; }
-  .modal-section { margin-bottom: 1.5rem; }
-  .modal-section-title {
-    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--text3); margin-bottom: 0.75rem;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .modal-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .ingredients-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; }
-  .ingredient-item {
-    display: flex; align-items: flex-start; gap: 0.5rem;
-    font-size: 0.85rem; color: var(--text2); padding: 0.4rem 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .ingredient-item::before { content: '·'; color: var(--accent); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
-  .directions-list { display: flex; flex-direction: column; gap: 0.85rem; }
-  .direction-step { display: flex; gap: 0.75rem; font-size: 0.87rem; color: var(--text2); line-height: 1.6; }
-  .step-num {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent-soft); border: 1px solid var(--accent);
-    color: var(--accent-2); font-size: 0.7rem; font-weight: 700; font-family: ui-monospace, 'SF Mono', monospace;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
-  }
-  .modal-actions {
-    display: flex; gap: 0.5rem; padding: 1.1rem 1.6rem 1.4rem;
-    border-top: 1px solid var(--border);
-  }
-  .modal-action-btn {
-    flex: 1; padding: 0.7rem; border-radius: var(--radius-sm);
-    font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
-    cursor: pointer; border: 1px solid var(--border); background: var(--glass-light);
-    color: var(--text2); transition: all 0.15s; display: flex;
-    align-items: center; justify-content: center; gap: 0.4rem;
-  }
-  .modal-action-btn:hover { border-color: var(--border2); color: var(--text); }
-  .modal-action-btn.like.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-  .modal-action-btn.dislike.active { background: var(--red-dim); border-color: var(--red); color: var(--red); }
-  .modal-action-btn.save.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-2); }
+    .search-hero {
+      margin-bottom: 1.75rem;
+    }
 
-  /* ── Preferences Panel (glass) ──────────────── */
-  .prefs-panel {
-    position: fixed; right: 0; top: 64px; bottom: 0;
-    width: 320px; background: var(--glass-strong); border-left: 1px solid var(--border);
-    z-index: 150; overflow-y: auto; padding: 1.4rem;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    animation: slideLeft 0.2s ease; display: flex; flex-direction: column; gap: 1.4rem;
-    box-shadow: -8px 0 40px rgba(60,46,20,0.10);
-  }
-  .prefs-panel.hidden { display: none; }
-  @keyframes slideLeft { from{transform:translateX(320px)} to{transform:translateX(0)} }
-  .prefs-panel::-webkit-scrollbar { width: 4px; }
-  .prefs-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-  .prefs-header { display: flex; align-items: center; justify-content: space-between; }
-  .prefs-header h3 { font-family: 'Inter', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--text); }
-  .prefs-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 1.1rem; }
-  .prefs-section h4 { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); margin-bottom: 0.65rem; }
-  .prefs-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .prefs-chip {
-    border: 1px solid var(--border); border-radius: 50px;
-    font-size: 0.78rem; padding: 5px 12px; cursor: pointer;
-    background: var(--tag-bg); color: var(--text2);
-    transition: all 0.15s; font-family: 'Inter', sans-serif;
-  }
-  .prefs-chip:hover { border-color: var(--border2); color: var(--text); }
-  .prefs-chip.active-like { background: var(--green-dim); border-color: var(--green); color: var(--green); }
-  .prefs-chip.active-dislike { background: var(--red-dim); border-color: var(--red); color: var(--red); }
-  .prefs-chip.active-restrict { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
-  .saved-list { display: flex; flex-direction: column; gap: 0.4rem; }
-  .saved-item {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--glass-light); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 0.55rem 0.8rem; cursor: pointer;
-  }
-  .saved-item:hover { border-color: var(--border2); }
-  .saved-item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .saved-item-remove { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 0.85rem; margin-left: 0.5rem; flex-shrink: 0; }
-  .saved-item-remove:hover { color: var(--red); }
-  .prefs-empty { color: var(--text3); font-size: 0.82rem; font-style: normal; }
+    .search-hero h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 0.4rem;
+    }
 
-  .chat-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 2rem; text-align: center; color: var(--text2); }
-  .chat-welcome .big-icon { font-size: 3.2rem; margin-bottom: 1rem; }
-  .chat-welcome h2 { font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
-  .chat-welcome p { font-size: 0.9rem; max-width: 380px; }
+    .search-hero h1 em {
+      font-style: normal;
+      color: var(--accent-2);
+    }
 
-  /* Toast (glass) */
-  .toast {
-    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
-    background: var(--glass-strong); border: 1px solid var(--border2); color: var(--text);
-    padding: 0.65rem 1.3rem; border-radius: 50px; font-size: 0.85rem; font-weight: 500;
-    box-shadow: var(--edge), var(--shadow); z-index: 999;
-    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
-    animation: toastIn 0.2s ease;
-  }
-  .toast.hidden { display: none; }
-  @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    .search-hero p {
+      color: var(--text2);
+      font-size: 0.92rem;
+    }
 
-  @media (max-width: 640px) {
-    .header { padding: 0 1rem; }
-    .search-view { padding: 1.25rem; }
-    .recipe-grid { grid-template-columns: 1fr; }
-    .ingredients-grid { grid-template-columns: 1fr; }
-    .chat-messages { padding: 1rem; }
-    .chat-input-area { padding: 0.75rem 1rem 1.25rem; }
-    .prefs-panel { width: 86vw; }
-    .header-tabs { display: none; }
-  }
-</style>
+    /* Search bar (glass) */
+    .search-bar-wrap {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .search-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      overflow: hidden;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--edge);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-input-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: var(--edge), 0 0 0 4px var(--accent-soft);
+    }
+
+    .search-icon {
+      padding: 0 0.4rem 0 1.1rem;
+      color: var(--text3);
+      font-size: 1rem;
+    }
+
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      padding: 0.75rem 0;
+      min-width: 0;
+    }
+
+    .search-input::placeholder {
+      color: var(--text3);
+    }
+
+    .search-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0 1.5rem;
+      border-radius: 50px;
+      margin: 4px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover {
+      background: var(--accent-2);
+    }
+
+    /* Filters (glass) */
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0.85rem 1rem;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.75rem;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--edge);
+    }
+
+    .filter-label {
+      color: var(--text3);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-right: 0.2rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      align-items: center;
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border2);
+      margin: 0 0.3rem;
+    }
+
+    .filter-chip {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 5px 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .filter-chip:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .filter-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .time-filter {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .time-filter label {
+      color: var(--text2);
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    .double-slider-container {
+      position: relative;
+      width: 140px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      margin: 0 0.4rem;
+    }
+
+    .double-slider-track {
+      position: absolute;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(112, 141, 112, 0.15);
+      width: 100%;
+      z-index: 1;
+    }
+
+    .double-slider-range {
+      position: absolute;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--accent);
+      z-index: 2;
+    }
+
+    .double-slider-input {
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      background: none;
+      pointer-events: none;
+      -webkit-appearance: none;
+      appearance: none;
+      z-index: 3;
+      outline: none;
+      margin: 0;
+    }
+
+    .double-slider-input::-webkit-slider-thumb {
+      height: 14px;
+      width: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid var(--accent);
+      cursor: pointer;
+      pointer-events: auto;
+      -webkit-appearance: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      transition: transform 0.1s ease;
+    }
+
+    .double-slider-input::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .time-values {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .clear-filters {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: auto;
+      padding: 5px 10px;
+      border-radius: 50px;
+      transition: background 0.15s;
+    }
+
+    .clear-filters:hover {
+      background: var(--red-dim);
+    }
+
+    .add-ingredient-inline {
+      display: inline-flex;
+      align-items: center;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 2px 4px 2px 10px;
+      height: 26px;
+      transition: border-color 0.15s;
+      vertical-align: middle;
+    }
+
+    .add-ingredient-inline:focus-within {
+      border-color: var(--accent);
+    }
+
+    .add-ingredient-inline input {
+      background: none;
+      border: none;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.76rem;
+      color: var(--text);
+      width: 80px;
+    }
+
+    .add-ingredient-inline input::placeholder {
+      color: var(--text3);
+    }
+
+    .add-ingredient-inline button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      transition: background 0.15s;
+      padding: 0;
+    }
+
+    .add-ingredient-inline button:hover {
+      background: var(--accent-2);
+    }
+
+    /* Results */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .results-count {
+      color: var(--text2);
+      font-size: 0.82rem;
+    }
+
+    .results-count strong {
+      color: var(--accent-2);
+    }
+
+    .sort-select {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      padding: 6px 12px;
+      cursor: pointer;
+      outline: none;
+      font-family: 'Inter', sans-serif;
+      backdrop-filter: var(--blur);
+    }
+
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.1rem;
+    }
+
+    /* Recipe Card (glass) */
+    .recipe-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--edge), var(--shadow-sm);
+    }
+
+    .recipe-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-3px);
+      box-shadow: var(--edge), var(--shadow);
+    }
+
+    .recipe-card.liked {
+      border-color: var(--green);
+      box-shadow: var(--edge), 0 0 0 3px var(--green-dim);
+    }
+
+    .recipe-card.disliked {
+      opacity: 0.45;
+    }
+
+    .card-top {
+      padding: 1.1rem 1.1rem 0.75rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .cuisine-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 9px;
+      border-radius: 50px;
+      background: var(--accent-soft);
+      color: var(--accent-2);
+    }
+
+    .diet-tag {
+      font-size: 0.66rem;
+      padding: 3px 8px;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+
+    .diet-tag.vegan {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .diet-tag.vegetarian {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .diet-tag.gluten-free {
+      background: var(--blue-dim);
+      color: var(--blue);
+    }
+
+    .card-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+      flex: 1;
+    }
+
+    .card-ingredients {
+      color: var(--text2);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 1.1rem;
+      border-top: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .card-time {
+      color: var(--text3);
+      font-size: 0.76rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .action-btn {
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      transition: all 0.15s;
+      color: var(--text2);
+    }
+
+    .action-btn:hover {
+      border-color: var(--border2);
+    }
+
+    .action-btn.like.active {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .action-btn.dislike.active {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .action-btn.save.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-2);
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text2);
+    }
+
+    .no-results .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .no-results h3 {
+      font-size: 1.1rem;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      font-weight: 700;
+    }
+
+    /* ── Chat View ──────────────────────── */
+    .chat-view {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 64px);
+      max-width: 880px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.75rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
+
+    .msg {
+      display: flex;
+      gap: 0.75rem;
+      max-width: 820px;
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .msg.ai .msg-avatar {
+      background: var(--accent-soft);
+      color: var(--accent-2);
+      border: 1px solid var(--accent);
+    }
+
+    .msg.user .msg-avatar {
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    .msg-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex: 1;
+    }
+
+    .msg-bubble {
+      padding: 0.8rem 1.05rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      box-shadow: var(--edge);
+    }
+
+    .msg.ai .msg-bubble {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .msg.user .msg-bubble {
+      background: var(--accent-soft);
+      border: 1px solid rgba(112, 141, 112, 0.25);
+      color: var(--text);
+    }
+
+    .msg-time {
+      color: var(--text3);
+      font-size: 0.72rem;
+      padding: 0 0.25rem;
+    }
+
+    .msg.user .msg-time {
+      text-align: right;
+    }
+
+    .ai-reasoning {
+      background: rgba(255, 255, 255, 0.35);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 0.6rem 0.9rem;
+      font-size: 0.8rem;
+      color: var(--text2);
+      font-style: normal;
+      margin-bottom: 0.25rem;
+    }
+
+    .ai-reasoning strong {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .chat-recipes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-top: 0.25rem;
+    }
+
+    .chat-recipe-card {
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: var(--edge);
+    }
+
+    .chat-recipe-card:hover {
+      border-color: var(--border2);
+      background: #fff;
+    }
+
+    .chat-recipe-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-recipe-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-recipe-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .chat-recipe-score {
+      font-family: ui-monospace, 'SF Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--accent-2);
+      background: var(--accent-soft);
+      padding: 2px 8px;
+      border-radius: 50px;
+    }
+
+    .chat-recipe-open {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 50px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.15s;
+    }
+
+    .chat-recipe-open:hover {
+      background: var(--accent-2);
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0.4rem 0;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text3);
+      animation: bounce 1.2s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0)
+      }
+
+      30% {
+        transform: translateY(-6px)
+      }
+    }
+
+    .chat-input-area {
+      border-top: 1px solid var(--border);
+      padding: 1rem 2rem 1.5rem;
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .suggestion-pill {
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: 50px;
+      font-size: 0.75rem;
+      padding: 6px 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .suggestion-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent-2);
+      background: var(--accent-soft);
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+      resize: none;
+      transition: border-color 0.15s;
+      line-height: 1.5;
+      max-height: 120px;
+      backdrop-filter: var(--blur);
+    }
+
+    .chat-input:focus {
+      border-color: var(--accent);
+    }
+
+    .chat-input::placeholder {
+      color: var(--text3);
+    }
+
+    .chat-send {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      padding: 0 1.4rem;
+      font-size: 1.1rem;
+      transition: background 0.15s;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+    }
+
+    .chat-send:hover {
+      background: var(--accent-2);
+    }
+
+    .chat-send:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Recipe Detail Modal (glass) ─────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(60, 46, 20, 0.18);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(6px);
+      animation: fadeIn 0.15s ease;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    .modal {
+      background: var(--glass-strong);
+      border: 1px solid var(--border2);
+      border-radius: 24px;
+      max-width: 660px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: var(--edge), var(--shadow-lg);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      animation: slideUp 0.2s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(16px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    .modal::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .modal::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px;
+    }
+
+    .modal-header {
+      padding: 1.6rem 1.6rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--glass-strong);
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .modal-header-left {
+      flex: 1;
+    }
+
+    .modal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .modal-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .modal-close {
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .modal-body {
+      padding: 1.6rem;
+    }
+
+    .modal-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .ingredients-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem;
+    }
+
+    .ingredient-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text2);
+      padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ingredient-item::before {
+      content: '·';
+      color: var(--accent);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .directions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .direction-step {
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.87rem;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      color: var(--accent-2);
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: ui-monospace, 'SF Mono', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.1rem 1.6rem 1.4rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .modal-action-btn {
+      flex: 1;
+      padding: 0.7rem;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--glass-light);
+      color: var(--text2);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .modal-action-btn:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .modal-action-btn.like.active {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .modal-action-btn.dislike.active {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .modal-action-btn.save.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-2);
+    }
+
+    /* ── Preferences Panel (glass) ──────────────── */
+    .prefs-panel {
+      position: fixed;
+      right: 0;
+      top: 64px;
+      bottom: 0;
+      width: 320px;
+      background: var(--glass-strong);
+      border-left: 1px solid var(--border);
+      z-index: 150;
+      overflow-y: auto;
+      padding: 1.4rem;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      animation: slideLeft 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+      box-shadow: -8px 0 40px rgba(60, 46, 20, 0.10);
+    }
+
+    .prefs-panel.hidden {
+      display: none;
+    }
+
+    @keyframes slideLeft {
+      from {
+        transform: translateX(320px)
+      }
+
+      to {
+        transform: translateX(0)
+      }
+    }
+
+    .prefs-panel::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .prefs-panel::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 2px;
+    }
+
+    .prefs-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .prefs-header h3 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .prefs-close {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .prefs-section h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text3);
+      margin-bottom: 0.65rem;
+    }
+
+    .prefs-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+
+    .prefs-chip {
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 0.78rem;
+      padding: 5px 12px;
+      cursor: pointer;
+      background: var(--tag-bg);
+      color: var(--text2);
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .prefs-chip:hover {
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    .prefs-chip.active-like {
+      background: var(--green-dim);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .prefs-chip.active-dislike {
+      background: var(--red-dim);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .prefs-chip.active-restrict {
+      background: var(--blue-dim);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+
+    .saved-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--glass-light);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.8rem;
+      cursor: pointer;
+    }
+
+    .saved-item:hover {
+      border-color: var(--border2);
+    }
+
+    .saved-item-title {
+      font-size: 0.82rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .saved-item-remove {
+      background: none;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-left: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .saved-item-remove:hover {
+      color: var(--red);
+    }
+
+    .prefs-empty {
+      color: var(--text3);
+      font-size: 0.82rem;
+      font-style: normal;
+    }
+
+    .chat-welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 2rem;
+      text-align: center;
+      color: var(--text2);
+    }
+
+    .chat-welcome .big-icon {
+      font-size: 3.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .chat-welcome h2 {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .chat-welcome p {
+      font-size: 0.9rem;
+      max-width: 380px;
+    }
+
+    /* Toast (glass) */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--glass-strong);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 0.65rem 1.3rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: var(--edge), var(--shadow);
+      z-index: 999;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+      animation: toastIn 0.2s ease;
+    }
+
+    .toast.hidden {
+      display: none;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        padding: 0 1rem;
+      }
+
+      .search-view {
+        padding: 1.25rem;
+      }
+
+      .recipe-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ingredients-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chat-messages {
+        padding: 1rem;
+      }
+
+      .chat-input-area {
+        padding: 0.75rem 1rem 1.25rem;
+      }
+
+      .prefs-panel {
+        width: 86vw;
+      }
+
+      .header-tabs {
+        display: none;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div id="root"></div>
-<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script>
-// ═══════════════════════════════════════════════════════════
-//  RECIPE DATA LOADER + SIMILARITY ENGINE (pure JS)
-// ═══════════════════════════════════════════════════════════
+  <div id="root"></div>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin
+    src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    //  RECIPE DATA LOADER + SIMILARITY ENGINE (pure JS)
+    // ═══════════════════════════════════════════════════════════
 
-const STOP_WORDS = new Set("a an the and or in on at to of for with from by is are was were be been being have has had do does did will would could should may might must shall can".split(" "));
+    const STOP_WORDS = new Set("a an the and or in on at to of for with from by is are was were be been being have has had do does did will would could should may might must shall can".split(" "));
 
-function tokenize(text) {
-  return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
-    .filter(t => t.length > 2 && !STOP_WORDS.has(t));
-}
-
-function cosineSimilarity(a, b) {
-  let dot = 0;
-  for (const [k, v] of Object.entries(a)) {
-    if (b[k]) dot += v * b[k];
-  }
-  return dot;
-}
-
-function buildQueryEmbedding(query, idf, vocab) {
-  const tokens = tokenize(query);
-  const tf = {};
-  tokens.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
-  const vec = {};
-  for (const [t, c] of Object.entries(tf)) {
-    if (vocab[t] !== undefined && idf[t]) {
-      vec[String(vocab[t])] = (c / tokens.length) * idf[t];
+    function tokenize(text) {
+      return text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/)
+        .filter(t => t.length > 2 && !STOP_WORDS.has(t));
     }
-  }
-  const norm = Math.sqrt(Object.values(vec).reduce((s, v) => s + v * v, 0));
-  if (norm > 0) Object.keys(vec).forEach(k => { vec[k] /= norm; });
-  return vec;
-}
 
-// ═══════════════════════════════════════════════════════════
-//  REACT APP
-// ═══════════════════════════════════════════════════════════
-const { useState, useEffect, useRef, useCallback, useMemo } = React;
+    function cosineSimilarity(a, b) {
+      let dot = 0;
+      for (const [k, v] of Object.entries(a)) {
+        if (b[k]) dot += v * b[k];
+      }
+      return dot;
+    }
 
-// ── Helpers ──────────────────────────────────────────────
-function timeLabel(min) {
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60), m = min % 60;
-  return m ? `${h}h ${m}m` : `${h}h`;
-}
-
-function TypingDots() {
-  return React.createElement('div', { className: 'typing-indicator' },
-    React.createElement('div', { className: 'typing-dot' }),
-    React.createElement('div', { className: 'typing-dot' }),
-    React.createElement('div', { className: 'typing-dot' }),
-  );
-}
-
-// Guess the tags based on keywords in the ingredients and title
-function deduceRecipeMeta(title, ingredients) {
-  const text = (title + ' ' + ingredients.join(' ')).toLowerCase();
-
-  // 1. Deduce Diet
-  let diet = ['gluten-free', 'vegetarian', 'vegan'];
-  const meats = ['chicken', 'beef', 'pork', 'turkey', 'meat', 'bacon', 'sausage', 'fish', 'shrimp', 'salmon', 'ham'];
-  const dairy = ['cheese', 'milk', 'butter', 'cream', 'yogurt', 'whey', 'egg'];
-  const gluten = ['flour', 'bread', 'pasta', 'biscuit', 'cracker', 'noodle', 'wheat', 'saltine'];
-
-  if (meats.some(m => text.includes(m))) {
-    diet = diet.filter(d => d !== 'vegetarian' && d !== 'vegan');
-  }
-  if (dairy.some(d => text.includes(d))) {
-    diet = diet.filter(d => d !== 'vegan');
-  }
-  if (gluten.some(g => text.includes(g))) {
-    diet = diet.filter(d => d !== 'gluten-free');
-  }
-
-  // 2. Deduce Cuisine
-  let cuisine = 'American';
-  if (text.includes('soy sauce') || text.includes('ginger') || text.includes('sesame')) cuisine = 'Asian';
-  else if (text.includes('tortilla') || text.includes('taco') || text.includes('salsa') || text.includes('jalapeno')) cuisine = 'Mexican';
-  else if (text.includes('pasta') || text.includes('parmesan') || text.includes('mozzarella') || text.includes('basil')) cuisine = 'Italian';
-  else if (text.includes('curry') || text.includes('garam masala') || text.includes('turmeric')) cuisine = 'Indian';
-
-  // 3. Deduce Time
-  let time = 45;
-  if (text.includes('slow cooker') || text.includes('crock') || text.includes('roast')) time = 240; // 4 hours
-  else if (text.includes('quick') || text.includes('fast')) time = 20;
-
-  return { diet, cuisine, time };
-}
-// ── Main App ─────────────────────────────────────────────
-function App() {
-  const [visibleCount, setVisibleCount] = useState(24);
-  const loadMoreRef = useRef(null);
-  const [recipes, setRecipes] = useState([]);
-  const [vocab, setVocab] = useState({});
-  const [idf, setIdf] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [indexingStatus, setIndexingStatus] = useState('idle');
-
-  // UI state
-  const [tab, setTab] = useState('search');
-  const [showPrefs, setShowPrefs] = useState(false);
-  const [toast, setToast] = useState(null);
-
-  // Search state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeCuisines, setActiveCuisines] = useState([]);
-  const [activeDiets, setActiveDiets] = useState([]);
-  const [activeMethods, setActiveMethods] = useState([]);
-  const [activeIngredients, setActiveIngredients] = useState([]);
-  const [customIngredientText, setCustomIngredientText] = useState('');
-  const [minTime, setMinTime] = useState(0);
-  const [maxTime, setMaxTime] = useState(240);
-
-  // User prefs
-  const [liked, setLiked] = useState(() => JSON.parse(localStorage.getItem('dc_liked') || '[]'));
-  const [disliked, setDisliked] = useState(() => JSON.parse(localStorage.getItem('dc_disliked') || '[]'));
-  const [saved, setSaved] = useState(() => JSON.parse(localStorage.getItem('dc_saved') || '[]'));
-  const [prefCuisines, setPrefCuisines] = useState(() => JSON.parse(localStorage.getItem('dc_prefCuisines') || '[]'));
-  const [prefDiets, setPrefDiets] = useState(() => JSON.parse(localStorage.getItem('dc_prefDiets') || '[]'));
-  const [restrictDiets, setRestrictDiets] = useState(() => JSON.parse(localStorage.getItem('dc_restrictDiets') || '[]'));
-
-  // Modal
-  const [modalRecipe, setModalRecipe] = useState(null);
-
-  // Chat
-  const [messages, setMessages] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-
-  // ── Persist prefs ──
-  useEffect(() => { localStorage.setItem('dc_liked', JSON.stringify(liked)); }, [liked]);
-  useEffect(() => { localStorage.setItem('dc_disliked', JSON.stringify(disliked)); }, [disliked]);
-  useEffect(() => { localStorage.setItem('dc_saved', JSON.stringify(saved)); }, [saved]);
-  useEffect(() => { localStorage.setItem('dc_prefCuisines', JSON.stringify(prefCuisines)); }, [prefCuisines]);
-  useEffect(() => { localStorage.setItem('dc_prefDiets', JSON.stringify(prefDiets)); }, [prefDiets]);
-  useEffect(() => { localStorage.setItem('dc_restrictDiets', JSON.stringify(restrictDiets)); }, [restrictDiets]);
-
-  // ── Load dataset ──
-  useEffect(() => {
-    fetch('recipes.json').then(r => r.json()).then(rawData => {
-      // 1. Convert the JSON object into an array and map the fields
-      const data = Object.entries(rawData).map(([id, item]) => {
-        const title = item.title || 'Untitled Recipe';
-        const ingredients = item.ingredients 
-          ? item.ingredients.map(ing => ing.replace(/ADVERTISEMENT/g, '').trim()).filter(Boolean)
-          : [];
-        const directions = item.instructions 
-          ? item.instructions.split('\n').filter(Boolean) 
-          : ['No instructions provided.'];
-
-        // Use our new function to guess the missing tags
-        const meta = deduceRecipeMeta(title, ingredients);
-
-        return {
-          id: id,
-          title: title,
-          ingredients: ingredients,
-          directions: directions,
-          picture_link: item.picture_link || '',
-          
-          // Apply the deduced tags so filters work again
-          cuisine: meta.cuisine, 
-          diet: meta.diet,           
-          time: meta.time,           
-          embedding: {}       
-        };
-      });
-
-      // Show Search tab UI instantly
-      setRecipes(data);
-      setLoading(false);
-      setIndexingStatus('indexing');
-
-      // 3. Compute IDF/Vocab and Embeddings asynchronously in chunks
-      setTimeout(() => {
-        const df = {};
-        const N = data.length;
-        data.forEach(r => {
-          const seen = new Set();
-          const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.directions.join(' ');
-          tokenize(text).forEach(t => {
-            if (!seen.has(t)) { df[t] = (df[t] || 0) + 1; seen.add(t); }
-          });
-        });
-
-        const idfMap = {};
-        const sortedTokens = Object.keys(df).sort();
-        const v2i = {};
-        sortedTokens.forEach((t, i) => { 
-          idfMap[t] = Math.log((N + 1) / (df[t] + 1));
-          v2i[t] = i; 
-        });
-
-        setVocab(v2i);
-        setIdf(idfMap);
-
-        // Calculate embeddings in chunks to avoid blocking render thread
-        let index = 0;
-        const chunkSize = 500;
-        function processNextChunk() {
-          const end = Math.min(index + chunkSize, data.length);
-          for (let i = index; i < end; i++) {
-            const r = data[i];
-            const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.diet.join(' ');
-            r.embedding = buildQueryEmbedding(text, idfMap, v2i);
-          }
-          index = end;
-          if (index < data.length) {
-            setTimeout(processNextChunk, 15);
-          } else {
-            setIndexingStatus('ready');
-          }
+    function buildQueryEmbedding(query, idf, vocab) {
+      const tokens = tokenize(query);
+      const tf = {};
+      tokens.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+      const vec = {};
+      for (const [t, c] of Object.entries(tf)) {
+        if (vocab[t] !== undefined && idf[t]) {
+          vec[String(vocab[t])] = (c / tokens.length) * idf[t];
         }
-        processNextChunk();
-      }, 60);
-    });
-  }, []);
-
-  // ── Scroll chat ──
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, chatLoading]);
-
-  // ── Toast helper ──
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2200);
-  }, []);
-
-  // ── All cuisines ──
-  const allCuisines = useMemo(() =>
-    [...new Set(recipes.map(r => r.cuisine))].sort(), [recipes]);
-
-  const DIETS = ['vegan', 'vegetarian', 'gluten-free'];
-  const METHODS = ['instant pot', 'oven', 'crock pot', 'air fryer', 'slow cooker', 'grill', 'stove'];
-  const COMMON_INGREDIENTS = ['chicken', 'beef', 'cheese', 'tomato', 'onion', 'garlic', 'lemon', 'rice'];
-
-  // ── Filtered recipes ──
-  const filteredRecipes = useMemo(() => {
-    let results = recipes;
-
-    // Filter out disliked recipes
-    results = results.filter(r => !disliked.includes(r.id));
-
-    // Restrict by dietary restrictions
-    if (restrictDiets.length > 0) {
-      results = results.filter(r =>
-        restrictDiets.every(d => r.diet.includes(d))
-      );
-    }
-
-    // Filter by active cuisines
-    if (activeCuisines.length > 0) {
-      results = results.filter(r => activeCuisines.includes(r.cuisine));
-    }
-
-    // Filter by active diets
-    if (activeDiets.length > 0) {
-      results = results.filter(r =>
-        activeDiets.every(d => r.diet.includes(d))
-      );
-    }
-
-    // Filter by active methods
-    if (activeMethods.length > 0) {
-      results = results.filter(r =>
-        activeMethods.every(m =>
-          r.title.toLowerCase().includes(m) ||
-          r.ingredients.some(ing => ing.toLowerCase().includes(m)) ||
-          r.directions.some(step => step.toLowerCase().includes(m))
-        )
-      );
-    }
-    
-    // Filter by active ingredients
-    if (activeIngredients.length > 0) {
-      results = results.filter(r =>
-        activeIngredients.every(ing =>
-          r.ingredients.some(ri => ri.toLowerCase().includes(ing))
-        )
-      );
-    }
-
-    // Filter by min/max time range
-    results = results.filter(r => r.time >= minTime && (maxTime === 240 || r.time <= maxTime));
-
-    // Search query matching
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      results = results.filter(r =>
-        r.title.toLowerCase().includes(q) ||
-        r.cuisine.toLowerCase().includes(q) ||
-        r.ingredients.some(ing => ing.toLowerCase().includes(q)) ||
-        r.directions.some(step => step.toLowerCase().includes(q))
-      );
-    }
-
-    // Sort to boost liked recipes and preferred cuisines/diets
-    results = [...results].sort((a, b) => {
-      const aLiked = liked.includes(a.id) ? 1 : 0;
-      const bLiked = liked.includes(b.id) ? 1 : 0;
-      if (aLiked !== bLiked) return bLiked - aLiked;
-
-      const aPrefCuisine = prefCuisines.includes(a.cuisine) ? 1 : 0;
-      const bPrefCuisine = prefCuisines.includes(b.cuisine) ? 1 : 0;
-      if (aPrefCuisine !== bPrefCuisine) return bPrefCuisine - aPrefCuisine;
-
-      return 0;
-    });
-
-    return results;
-  }, [
-    recipes,
-    searchQuery,
-    activeCuisines,
-    activeDiets,
-    activeMethods,
-    minTime,
-    maxTime,
-    liked,
-    disliked,
-    prefCuisines,
-    prefDiets,
-    restrictDiets,
-    activeIngredients
-  ]);
-
-  // ── Infinite scroll loading logic ──
-  useEffect(() => {
-    setVisibleCount(24);
-  }, [searchQuery, activeCuisines, activeDiets, activeMethods, activeIngredients, minTime, maxTime, restrictDiets]);
-
-  useEffect(() => {
-    if (!loadMoreRef.current) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        setVisibleCount(prev => prev + 24);
       }
-    }, { threshold: 0.1 });
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [filteredRecipes, visibleCount]);
+      const norm = Math.sqrt(Object.values(vec).reduce((s, v) => s + v * v, 0));
+      if (norm > 0) Object.keys(vec).forEach(k => { vec[k] /= norm; });
+      return vec;
+    }
 
+    // ═══════════════════════════════════════════════════════════
+    //  REACT APP
+    // ═══════════════════════════════════════════════════════════
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-  // ── Vector search ──
-  const vectorSearch = useCallback((query, topN = 5) => {
-    const qVec = buildQueryEmbedding(query, idf, vocab);
-    const scores = recipes
-      .filter(r => !disliked.includes(r.id))
-      .filter(r => restrictDiets.length === 0 || restrictDiets.every(d => r.diet.includes(d)))
-      .map(r => ({
-        ...r,
-        similarity: cosineSimilarity(qVec, r.embedding)
-      }))
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, topN);
-    return scores;
-  }, [recipes, idf, vocab, disliked, restrictDiets]);
+    // ── Helpers ──────────────────────────────────────────────
+    function timeLabel(min) {
+      if (min < 60) return `${min} min`;
+      const h = Math.floor(min / 60), m = min % 60;
+      return m ? `${h}h ${m}m` : `${h}h`;
+    }
 
-  // ── Toggle helpers ──
-  const toggleLike = (id, e) => {
-    e?.stopPropagation();
-    setLiked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    setDisliked(prev => prev.filter(x => x !== id));
-    showToast(liked.includes(id) ? 'Removed from liked' : '👍 Liked!');
-  };
-  const toggleDislike = (id, e) => {
-    e?.stopPropagation();
-    setDisliked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    setLiked(prev => prev.filter(x => x !== id));
-    showToast(disliked.includes(id) ? 'Removed from disliked' : '👎 Noted');
-  };
-  const toggleSave = (recipe, e) => {
-    e?.stopPropagation();
-    const isSaved = saved.some(s => s.id === recipe.id);
-    setSaved(prev => isSaved ? prev.filter(s => s.id !== recipe.id) : [...prev, { id: recipe.id, title: recipe.title }]);
-    showToast(isSaved ? 'Removed from saved' : '🔖 Saved!');
-  };
+    function TypingDots() {
+      return React.createElement('div', { className: 'typing-indicator' },
+        React.createElement('div', { className: 'typing-dot' }),
+        React.createElement('div', { className: 'typing-dot' }),
+        React.createElement('div', { className: 'typing-dot' }),
+      );
+    }
 
-  const prefsCount = prefCuisines.length + prefDiets.length + restrictDiets.length + saved.length;
+    // Guess the tags based on keywords in the ingredients and title
+    function deduceRecipeMeta(title, ingredients) {
+      const text = (title + ' ' + ingredients.join(' ')).toLowerCase();
 
-  // ── Chat send ──
-  const sendChat = useCallback((text) => {
-    if (!text.trim() || chatLoading) return;
-    const userMsg = { role: 'user', content: text, time: new Date() };
-    setMessages(prev => [...prev, userMsg]);
-    setChatInput('');
-    setChatLoading(true);
+      // 1. Deduce Diet
+      let diet = ['gluten-free', 'vegetarian', 'vegan'];
+      const meats = ['chicken', 'beef', 'pork', 'turkey', 'meat', 'bacon', 'sausage', 'fish', 'shrimp', 'salmon', 'ham'];
+      const dairy = ['cheese', 'milk', 'butter', 'cream', 'yogurt', 'whey', 'egg'];
+      const gluten = ['flour', 'bread', 'pasta', 'biscuit', 'cracker', 'noodle', 'wheat', 'saltine'];
 
-    // Simulate thinking delay (450ms) for natural feel
-    setTimeout(() => {
-      const matches = vectorSearch(text, 6);
-      const queryLower = text.toLowerCase();
-      
-      let responseText = `I've searched our dataset of ${recipes.length} recipes. Based on local semantic similarity, here are the best matches for "${text}":`;
-      if (queryLower.includes('vegan')) {
-        responseText = `Here are the top vegan recipes I found matching "${text}" from our database:`;
-      } else if (queryLower.includes('vegetarian')) {
-        responseText = `Here are the top vegetarian options from the dataset that match "${text}":`;
-      } else if (queryLower.includes('gluten')) {
-        responseText = `Here are the best gluten-free options matching "${text}" from our recipe list:`;
-      } else if (queryLower.includes('quick') || queryLower.includes('fast') || queryLower.includes('easy')) {
-        responseText = `Here are some quick and easy recipes from our database matching "${text}":`;
+      if (meats.some(m => text.includes(m))) {
+        diet = diet.filter(d => d !== 'vegetarian' && d !== 'vegan');
       }
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: responseText,
-        recipes: matches.slice(0, 4),
-        time: new Date()
-      }]);
-    }, 450);
-    setChatLoading(false);
-  }, [chatLoading, messages, vectorSearch, prefCuisines, prefDiets, restrictDiets]);
+      if (dairy.some(d => text.includes(d))) {
+        diet = diet.filter(d => d !== 'vegan');
+      }
+      if (gluten.some(g => text.includes(g))) {
+        diet = diet.filter(d => d !== 'gluten-free');
+      }
 
-  const handleChatKey = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(chatInput); }
-  };
+      // 2. Deduce Cuisine
+      let cuisine = 'American';
+      if (text.includes('soy sauce') || text.includes('ginger') || text.includes('sesame')) cuisine = 'Asian';
+      else if (text.includes('tortilla') || text.includes('taco') || text.includes('salsa') || text.includes('jalapeno')) cuisine = 'Mexican';
+      else if (text.includes('pasta') || text.includes('parmesan') || text.includes('mozzarella') || text.includes('basil')) cuisine = 'Italian';
+      else if (text.includes('curry') || text.includes('garam masala') || text.includes('turmeric')) cuisine = 'Indian';
 
-  // ── Render helpers ──
-  function RecipeCard({ recipe }) {
-    const isLiked = liked.includes(recipe.id);
-    const isDisliked = disliked.includes(recipe.id);
-    const isSaved = saved.some(s => s.id === recipe.id);
-    return React.createElement('div', {
-      className: `recipe-card${isLiked ? ' liked' : ''}${isDisliked ? ' disliked' : ''}`,
-      onClick: () => setModalRecipe(recipe)
-    },
-      React.createElement('div', { className: 'card-top' },
-        React.createElement('div', { className: 'card-meta' },
-          React.createElement('span', { className: 'cuisine-badge' }, recipe.cuisine),
-          ...recipe.diet.slice(0, 2).map(d =>
-            React.createElement('span', { key: d, className: `diet-tag ${d}` }, d)
-          )
-        ),
-        React.createElement('div', { className: 'card-title' }, recipe.title),
-        React.createElement('div', { className: 'card-ingredients' },
-          recipe.ingredients.slice(0, 4).join(', ')
-        )
-      ),
-      React.createElement('div', { className: 'card-bottom' },
-        React.createElement('div', { className: 'card-time' }, '⏱ ', timeLabel(recipe.time)),
-        React.createElement('div', { className: 'card-actions' },
-          React.createElement('button', { className: `action-btn like${isLiked ? ' active' : ''}`, onClick: e => toggleLike(recipe.id, e), title: 'Like' }, '👍'),
-          React.createElement('button', { className: `action-btn dislike${isDisliked ? ' active' : ''}`, onClick: e => toggleDislike(recipe.id, e), title: 'Dislike' }, '👎'),
-          React.createElement('button', { className: `action-btn save${isSaved ? ' active' : ''}`, onClick: e => toggleSave(recipe, e), title: 'Save' }, '🔖'),
-        )
-      )
-    );
-  }
+      // 3. Deduce Time
+      let time = 45;
+      if (text.includes('slow cooker') || text.includes('crock') || text.includes('roast')) time = 240; // 4 hours
+      else if (text.includes('quick') || text.includes('fast')) time = 20;
 
-  function RecipeModal({ recipe }) {
-    const isLiked = liked.includes(recipe.id);
-    const isDisliked = disliked.includes(recipe.id);
-    const isSaved = saved.some(s => s.id === recipe.id);
-    return React.createElement('div', { className: 'modal-overlay', onClick: e => e.target.classList.contains('modal-overlay') && setModalRecipe(null) },
-      React.createElement('div', { className: 'modal' },
-        React.createElement('div', { className: 'modal-header' },
-          React.createElement('div', { className: 'modal-header-left' },
-            React.createElement('div', { className: 'modal-meta' },
+      return { diet, cuisine, time };
+    }
+    // ── Main App ─────────────────────────────────────────────
+    function App() {
+      const [visibleCount, setVisibleCount] = useState(24);
+      const loadMoreRef = useRef(null);
+      const [recipes, setRecipes] = useState([]);
+      const [vocab, setVocab] = useState({});
+      const [idf, setIdf] = useState({});
+      const [loading, setLoading] = useState(true);
+      const [indexingStatus, setIndexingStatus] = useState('idle');
+
+      // UI state
+      const [tab, setTab] = useState('search');
+      const [showPrefs, setShowPrefs] = useState(false);
+      const [toast, setToast] = useState(null);
+
+      // Search state
+      const [searchQuery, setSearchQuery] = useState('');
+      const [activeCuisines, setActiveCuisines] = useState([]);
+      const [activeDiets, setActiveDiets] = useState([]);
+      const [activeMethods, setActiveMethods] = useState([]);
+      const [activeIngredients, setActiveIngredients] = useState([]);
+      const [customIngredientText, setCustomIngredientText] = useState('');
+      const [minTime, setMinTime] = useState(0);
+      const [maxTime, setMaxTime] = useState(240);
+
+      // User prefs
+      const [liked, setLiked] = useState(() => JSON.parse(localStorage.getItem('dc_liked') || '[]'));
+      const [disliked, setDisliked] = useState(() => JSON.parse(localStorage.getItem('dc_disliked') || '[]'));
+      const [saved, setSaved] = useState(() => JSON.parse(localStorage.getItem('dc_saved') || '[]'));
+      const [prefCuisines, setPrefCuisines] = useState(() => JSON.parse(localStorage.getItem('dc_prefCuisines') || '[]'));
+      const [prefDiets, setPrefDiets] = useState(() => JSON.parse(localStorage.getItem('dc_prefDiets') || '[]'));
+      const [restrictDiets, setRestrictDiets] = useState(() => JSON.parse(localStorage.getItem('dc_restrictDiets') || '[]'));
+
+      // Modal
+      const [modalRecipe, setModalRecipe] = useState(null);
+
+      // Chat
+      const [messages, setMessages] = useState([]);
+      const [chatInput, setChatInput] = useState('');
+      const [chatLoading, setChatLoading] = useState(false);
+      const messagesEndRef = useRef(null);
+
+      // ── Persist prefs ──
+      useEffect(() => { localStorage.setItem('dc_liked', JSON.stringify(liked)); }, [liked]);
+      useEffect(() => { localStorage.setItem('dc_disliked', JSON.stringify(disliked)); }, [disliked]);
+      useEffect(() => { localStorage.setItem('dc_saved', JSON.stringify(saved)); }, [saved]);
+      useEffect(() => { localStorage.setItem('dc_prefCuisines', JSON.stringify(prefCuisines)); }, [prefCuisines]);
+      useEffect(() => { localStorage.setItem('dc_prefDiets', JSON.stringify(prefDiets)); }, [prefDiets]);
+      useEffect(() => { localStorage.setItem('dc_restrictDiets', JSON.stringify(restrictDiets)); }, [restrictDiets]);
+
+      // ── Load dataset ──
+      useEffect(() => {
+        fetch('recipes.json').then(r => r.json()).then(rawData => {
+          // 1. Convert the JSON object into an array and map the fields
+          const data = Object.entries(rawData).map(([id, item]) => {
+            const title = item.title || 'Untitled Recipe';
+            const ingredients = item.ingredients
+              ? item.ingredients.map(ing => ing.replace(/ADVERTISEMENT/g, '').trim()).filter(Boolean)
+              : [];
+            const directions = item.instructions
+              ? item.instructions.split('\n').filter(Boolean)
+              : ['No instructions provided.'];
+
+            // Use our new function to guess the missing tags
+            const meta = deduceRecipeMeta(title, ingredients);
+
+            return {
+              id: id,
+              title: title,
+              ingredients: ingredients,
+              directions: directions,
+              picture_link: item.picture_link || '',
+
+              // Apply the deduced tags so filters work again
+              cuisine: meta.cuisine,
+              diet: meta.diet,
+              time: meta.time,
+              embedding: {}
+            };
+          });
+
+          // Show Search tab UI instantly
+          setRecipes(data);
+          setLoading(false);
+          setIndexingStatus('indexing');
+
+          // 3. Compute IDF/Vocab and Embeddings asynchronously in chunks
+          setTimeout(() => {
+            const df = {};
+            const N = data.length;
+            data.forEach(r => {
+              const seen = new Set();
+              const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.directions.join(' ');
+              tokenize(text).forEach(t => {
+                if (!seen.has(t)) { df[t] = (df[t] || 0) + 1; seen.add(t); }
+              });
+            });
+
+            const idfMap = {};
+            const sortedTokens = Object.keys(df).sort();
+            const v2i = {};
+            sortedTokens.forEach((t, i) => {
+              idfMap[t] = Math.log((N + 1) / (df[t] + 1));
+              v2i[t] = i;
+            });
+
+            setVocab(v2i);
+            setIdf(idfMap);
+
+            // Calculate embeddings in chunks to avoid blocking render thread
+            let index = 0;
+            const chunkSize = 500;
+            function processNextChunk() {
+              const end = Math.min(index + chunkSize, data.length);
+              for (let i = index; i < end; i++) {
+                const r = data[i];
+                const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.diet.join(' ');
+                r.embedding = buildQueryEmbedding(text, idfMap, v2i);
+              }
+              index = end;
+              if (index < data.length) {
+                setTimeout(processNextChunk, 15);
+              } else {
+                setIndexingStatus('ready');
+              }
+            }
+            processNextChunk();
+          }, 60);
+        });
+      }, []);
+
+      // ── Scroll chat ──
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, chatLoading]);
+
+      // ── Toast helper ──
+      const showToast = useCallback((msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 2200);
+      }, []);
+
+      // ── All cuisines ──
+      const allCuisines = useMemo(() =>
+        [...new Set(recipes.map(r => r.cuisine))].sort(), [recipes]);
+
+      const DIETS = ['vegan', 'vegetarian', 'gluten-free'];
+      const METHODS = ['instant pot', 'oven', 'crock pot', 'air fryer', 'slow cooker', 'grill', 'stove'];
+      const COMMON_INGREDIENTS = ['chicken', 'beef', 'cheese', 'tomato', 'onion', 'garlic', 'lemon', 'rice'];
+
+      // ── Filtered recipes ──
+      const filteredRecipes = useMemo(() => {
+        let results = recipes;
+
+        // Filter out disliked recipes
+        results = results.filter(r => !disliked.includes(r.id));
+
+        // Restrict by dietary restrictions
+        if (restrictDiets.length > 0) {
+          results = results.filter(r =>
+            restrictDiets.every(d => r.diet.includes(d))
+          );
+        }
+
+        // Filter by active cuisines
+        if (activeCuisines.length > 0) {
+          results = results.filter(r => activeCuisines.includes(r.cuisine));
+        }
+
+        // Filter by active diets
+        if (activeDiets.length > 0) {
+          results = results.filter(r =>
+            activeDiets.every(d => r.diet.includes(d))
+          );
+        }
+
+        // Filter by active methods
+        if (activeMethods.length > 0) {
+          results = results.filter(r =>
+            activeMethods.every(m =>
+              r.title.toLowerCase().includes(m) ||
+              r.ingredients.some(ing => ing.toLowerCase().includes(m)) ||
+              r.directions.some(step => step.toLowerCase().includes(m))
+            )
+          );
+        }
+
+        // Filter by active ingredients
+        if (activeIngredients.length > 0) {
+          results = results.filter(r =>
+            activeIngredients.every(ing =>
+              r.ingredients.some(ri => ri.toLowerCase().includes(ing))
+            )
+          );
+        }
+
+        // Filter by min/max time range
+        results = results.filter(r => r.time >= minTime && (maxTime === 240 || r.time <= maxTime));
+
+        // Search query matching
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          results = results.filter(r =>
+            r.title.toLowerCase().includes(q) ||
+            r.cuisine.toLowerCase().includes(q) ||
+            r.ingredients.some(ing => ing.toLowerCase().includes(q)) ||
+            r.directions.some(step => step.toLowerCase().includes(q))
+          );
+        }
+
+        // Sort to boost liked recipes and preferred cuisines/diets
+        results = [...results].sort((a, b) => {
+          const aLiked = liked.includes(a.id) ? 1 : 0;
+          const bLiked = liked.includes(b.id) ? 1 : 0;
+          if (aLiked !== bLiked) return bLiked - aLiked;
+
+          const aPrefCuisine = prefCuisines.includes(a.cuisine) ? 1 : 0;
+          const bPrefCuisine = prefCuisines.includes(b.cuisine) ? 1 : 0;
+          if (aPrefCuisine !== bPrefCuisine) return bPrefCuisine - aPrefCuisine;
+
+          return 0;
+        });
+
+        return results;
+      }, [
+        recipes,
+        searchQuery,
+        activeCuisines,
+        activeDiets,
+        activeMethods,
+        minTime,
+        maxTime,
+        liked,
+        disliked,
+        prefCuisines,
+        prefDiets,
+        restrictDiets,
+        activeIngredients
+      ]);
+
+      // ── Infinite scroll loading logic ──
+      useEffect(() => {
+        setVisibleCount(24);
+      }, [searchQuery, activeCuisines, activeDiets, activeMethods, activeIngredients, minTime, maxTime, restrictDiets]);
+
+      useEffect(() => {
+        if (!loadMoreRef.current) return;
+        const observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting) {
+            setVisibleCount(prev => prev + 24);
+          }
+        }, { threshold: 0.1 });
+        observer.observe(loadMoreRef.current);
+        return () => observer.disconnect();
+      }, [filteredRecipes, visibleCount]);
+
+
+      // ── Vector search ──
+      const vectorSearch = useCallback((query, topN = 5) => {
+        const qVec = buildQueryEmbedding(query, idf, vocab);
+        const scores = recipes
+          .filter(r => !disliked.includes(r.id))
+          .filter(r => restrictDiets.length === 0 || restrictDiets.every(d => r.diet.includes(d)))
+          .map(r => ({
+            ...r,
+            similarity: cosineSimilarity(qVec, r.embedding)
+          }))
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, topN);
+        return scores;
+      }, [recipes, idf, vocab, disliked, restrictDiets]);
+
+      // ── Toggle helpers ──
+      const toggleLike = (id, e) => {
+        e?.stopPropagation();
+        setLiked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+        setDisliked(prev => prev.filter(x => x !== id));
+        showToast(liked.includes(id) ? 'Removed from liked' : '👍 Liked!');
+      };
+      const toggleDislike = (id, e) => {
+        e?.stopPropagation();
+        setDisliked(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+        setLiked(prev => prev.filter(x => x !== id));
+        showToast(disliked.includes(id) ? 'Removed from disliked' : '👎 Noted');
+      };
+      const toggleSave = (recipe, e) => {
+        e?.stopPropagation();
+        const isSaved = saved.some(s => s.id === recipe.id);
+        setSaved(prev => isSaved ? prev.filter(s => s.id !== recipe.id) : [...prev, { id: recipe.id, title: recipe.title }]);
+        showToast(isSaved ? 'Removed from saved' : '🔖 Saved!');
+      };
+
+      const prefsCount = prefCuisines.length + prefDiets.length + restrictDiets.length + saved.length;
+
+      // ── Chat send ──
+      const sendChat = useCallback((text) => {
+        if (!text.trim() || chatLoading) return;
+        const userMsg = { role: 'user', content: text, time: new Date() };
+        setMessages(prev => [...prev, userMsg]);
+        setChatInput('');
+        setChatLoading(true);
+
+        // Simulate thinking delay (450ms) for natural feel
+        setTimeout(() => {
+          const matches = vectorSearch(text, 6);
+          const queryLower = text.toLowerCase();
+
+          let responseText = `I've searched our dataset of ${recipes.length} recipes. Based on local semantic similarity, here are the best matches for "${text}":`;
+          if (queryLower.includes('vegan')) {
+            responseText = `Here are the top vegan recipes I found matching "${text}" from our database:`;
+          } else if (queryLower.includes('vegetarian')) {
+            responseText = `Here are the top vegetarian options from the dataset that match "${text}":`;
+          } else if (queryLower.includes('gluten')) {
+            responseText = `Here are the best gluten-free options matching "${text}" from our recipe list:`;
+          } else if (queryLower.includes('quick') || queryLower.includes('fast') || queryLower.includes('easy')) {
+            responseText = `Here are some quick and easy recipes from our database matching "${text}":`;
+          }
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: responseText,
+            recipes: matches.slice(0, 4),
+            time: new Date()
+          }]);
+        }, 450);
+        setChatLoading(false);
+      }, [chatLoading, messages, vectorSearch, prefCuisines, prefDiets, restrictDiets]);
+
+      const handleChatKey = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(chatInput); }
+      };
+
+      // ── Render helpers ──
+      function RecipeCard({ recipe }) {
+        const isLiked = liked.includes(recipe.id);
+        const isDisliked = disliked.includes(recipe.id);
+        const isSaved = saved.some(s => s.id === recipe.id);
+        return React.createElement('div', {
+          className: `recipe-card${isLiked ? ' liked' : ''}${isDisliked ? ' disliked' : ''}`,
+          onClick: () => setModalRecipe(recipe)
+        },
+          React.createElement('div', { className: 'card-top' },
+            React.createElement('div', { className: 'card-meta' },
               React.createElement('span', { className: 'cuisine-badge' }, recipe.cuisine),
-              React.createElement('span', { className: 'card-time' }, '⏱ ', timeLabel(recipe.time)),
-              ...recipe.diet.map(d => React.createElement('span', { key: d, className: `diet-tag ${d}` }, d))
-            ),
-            React.createElement('div', { className: 'modal-title' }, recipe.title)
-          ),
-          React.createElement('button', { className: 'modal-close', onClick: () => setModalRecipe(null) }, '✕')
-        ),
-        React.createElement('div', { className: 'modal-body' },
-          React.createElement('div', { className: 'modal-section' },
-            React.createElement('div', { className: 'modal-section-title' }, 'Ingredients'),
-            React.createElement('div', { className: 'ingredients-grid' },
-              ...recipe.ingredients.map((ing, i) =>
-                React.createElement('div', { key: i, className: 'ingredient-item' }, ing)
+              ...recipe.diet.slice(0, 2).map(d =>
+                React.createElement('span', { key: d, className: `diet-tag ${d}` }, d)
               )
-            )
-          ),
-          React.createElement('div', { className: 'modal-section' },
-            React.createElement('div', { className: 'modal-section-title' }, 'Directions'),
-            React.createElement('div', { className: 'directions-list' },
-              ...recipe.directions.map((step, i) =>
-                React.createElement('div', { key: i, className: 'direction-step' },
-                  React.createElement('div', { className: 'step-num' }, i + 1),
-                  React.createElement('div', null, step)
-                )
-              )
-            )
-          )
-        ),
-        React.createElement('div', { className: 'modal-actions' },
-          React.createElement('button', { className: `modal-action-btn like${isLiked ? ' active' : ''}`, onClick: () => toggleLike(recipe.id) },
-            '👍 ', isLiked ? 'Liked' : 'Like'
-          ),
-          React.createElement('button', { className: `modal-action-btn dislike${isDisliked ? ' active' : ''}`, onClick: () => toggleDislike(recipe.id) },
-            '👎 ', isDisliked ? 'Disliked' : 'Dislike'
-          ),
-          React.createElement('button', { className: `modal-action-btn save${isSaved ? ' active' : ''}`, onClick: () => toggleSave(recipe) },
-            '🔖 ', isSaved ? 'Saved' : 'Save'
-          ),
-        )
-      )
-    );
-  }
-
-  function PrefsPanel() {
-    const savedRecipes = recipes.filter(r => saved.some(s => s.id === r.id));
-    const toggle = (arr, setter, val) =>
-      setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
-
-    return React.createElement('div', { className: 'prefs-panel' },
-      React.createElement('div', { className: 'prefs-header' },
-        React.createElement('h3', null, 'Your Preferences'),
-        React.createElement('button', { className: 'prefs-close', onClick: () => setShowPrefs(false) }, '✕')
-      ),
-      React.createElement('div', { className: 'prefs-section' },
-        React.createElement('h4', null, '🍽 Favourite Cuisines'),
-        React.createElement('div', { className: 'prefs-chips' },
-          ...allCuisines.map(c =>
-            React.createElement('button', {
-              key: c, className: `prefs-chip${prefCuisines.includes(c) ? ' active-like' : ''}`,
-              onClick: () => toggle(prefCuisines, setPrefCuisines, c)
-            }, c)
-          )
-        )
-      ),
-      React.createElement('div', { className: 'prefs-section' },
-        React.createElement('h4', null, '✅ Dietary Preferences'),
-        React.createElement('div', { className: 'prefs-chips' },
-          ...DIETS.map(d =>
-            React.createElement('button', {
-              key: d, className: `prefs-chip${prefDiets.includes(d) ? ' active-like' : ''}`,
-              onClick: () => toggle(prefDiets, setPrefDiets, d)
-            }, d)
-          )
-        )
-      ),
-      React.createElement('div', { className: 'prefs-section' },
-        React.createElement('h4', null, '🚫 Dietary Restrictions'),
-        React.createElement('div', { className: 'prefs-chips' },
-          ...DIETS.map(d =>
-            React.createElement('button', {
-              key: d, className: `prefs-chip${restrictDiets.includes(d) ? ' active-restrict' : ''}`,
-              onClick: () => toggle(restrictDiets, setRestrictDiets, d)
-            }, d)
-          )
-        )
-      ),
-      React.createElement('div', { className: 'prefs-section' },
-        React.createElement('h4', null, '🔖 Saved Recipes'),
-        savedRecipes.length === 0
-          ? React.createElement('p', { className: 'prefs-empty' }, 'No saved recipes yet')
-          : React.createElement('div', { className: 'saved-list' },
-              ...savedRecipes.map(r =>
-                React.createElement('div', { key: r.id, className: 'saved-item', onClick: () => setModalRecipe(r) },
-                  React.createElement('div', { className: 'saved-item-title' }, r.title),
-                  React.createElement('button', {
-                    className: 'saved-item-remove',
-                    onClick: e => { e.stopPropagation(); toggleSave(r); }
-                  }, '✕')
-                )
-              )
-            )
-      )
-    );
-  }
-
-  const SUGGESTIONS = [
-    'Quick weeknight dinner', 'High protein meal', 'Something vegan',
-    'Comfort food for winter', 'Easy 20-minute recipe', 'Impress guests with Italian'
-  ];
-
-  if (loading) {
-    return React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '1rem' } },
-      React.createElement('div', { style: { fontSize: '2rem' } }, '🍳'),
-      React.createElement('div', { style: { color: 'var(--accent)', fontFamily: 'DM Mono', fontSize: '0.85rem' } }, 'Loading recipes...')
-    );
-  }
-
-  return React.createElement('div', { className: 'app' },
-    // Header
-    React.createElement('header', { className: 'header' },
-      React.createElement('div', { className: 'logo' },
-        React.createElement('span', { className: 'logo-dot' }),
-        'Dishcover'
-      ),
-      React.createElement('div', { className: 'header-tabs' },
-        React.createElement('button', { className: `tab-btn${tab === 'search' ? ' active' : ''}`, onClick: () => setTab('search') }, '🔍 Search'),
-        React.createElement('button', { className: `tab-btn${tab === 'chat' ? ' active' : ''}`, onClick: () => setTab('chat') }, '✨ AI Chat'),
-      ),
-      React.createElement('div', { className: 'header-right' },
-        React.createElement('button', { className: 'prefs-btn', onClick: () => setShowPrefs(p => !p) },
-          '⚙ Preferences',
-          prefsCount > 0 && React.createElement('span', { className: 'prefs-count' }, prefsCount)
-        )
-      )
-    ),
-
-    // Main
-    React.createElement('main', { className: 'main' },
-
-      // ── SEARCH TAB ──
-      tab === 'search' && React.createElement('div', { className: 'search-view' },
-        React.createElement('div', { className: 'search-hero' },
-          React.createElement('h1', null, 'Find your next ', React.createElement('em', null, 'perfect'), ' dish'),
-          React.createElement('p', null, `${recipes.length} recipes from RecipeNLG · filter, discover, personalise`)
-        ),
-
-        // Search bar
-        React.createElement('div', { className: 'search-bar-wrap' },
-          React.createElement('div', { className: 'search-input-wrap' },
-            React.createElement('span', { className: 'search-icon' }, '🔍'),
-            React.createElement('input', {
-              className: 'search-input',
-              placeholder: 'Search by ingredient, dish, cuisine…',
-              value: searchQuery,
-              onChange: e => setSearchQuery(e.target.value),
-              onKeyDown: e => e.key === 'Enter' && null
-            })
-          ),
-          searchQuery && React.createElement('button', { className: 'search-btn', onClick: () => setSearchQuery(''), style: { background: 'var(--surface)', color: 'var(--text2)', border: '1px solid var(--border)' } }, 'Clear')
-        ),
-
-        // Filters
-        React.createElement('div', { className: 'filters-row' },
-          React.createElement('span', { className: 'filter-label' }, 'Cuisine'),
-          React.createElement('div', { className: 'filter-group' },
-            ...allCuisines.map(c =>
-              React.createElement('button', {
-                key: c, className: `filter-chip${activeCuisines.includes(c) ? ' active' : ''}`,
-                onClick: () => setActiveCuisines(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
-              }, c)
-            )
-          ),
-          React.createElement('div', { className: 'filter-divider' }),
-          React.createElement('span', { className: 'filter-label' }, 'Diet'),
-          React.createElement('div', { className: 'filter-group' },
-            ...DIETS.map(d =>
-              React.createElement('button', {
-                key: d, className: `filter-chip${activeDiets.includes(d) ? ' active' : ''}`,
-                onClick: () => setActiveDiets(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])
-              }, d)
-            )
-          ),
-          React.createElement('div', { className: 'filter-divider' }),
-          React.createElement('span', { className: 'filter-label' }, 'Method'),
-          React.createElement('div', { className: 'filter-group' },
-            ...METHODS.map(m =>
-              React.createElement('button', {
-                key: m, className: `filter-chip${activeMethods.includes(m) ? ' active' : ''}`,
-                onClick: () => setActiveMethods(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
-              }, m)
-            )
-          ),
-          React.createElement('div', { className: 'filter-divider' }),
-          React.createElement('span', { className: 'filter-label' }, 'Ingredients'),
-          React.createElement('div', { className: 'filter-group' },
-            ...COMMON_INGREDIENTS.map(ing =>
-              React.createElement('button', {
-                key: ing, className: `filter-chip${activeIngredients.includes(ing) ? ' active' : ''}`,
-                onClick: () => setActiveIngredients(prev => prev.includes(ing) ? prev.filter(x => x !== ing) : [...prev, ing])
-              }, ing)
             ),
-            ...activeIngredients.filter(ing => !COMMON_INGREDIENTS.includes(ing)).map(ing =>
-              React.createElement('button', {
-                key: ing, className: 'filter-chip active',
-                onClick: () => setActiveIngredients(prev => prev.filter(x => x !== ing))
-              }, ing)
-            ),
-            React.createElement('div', { className: 'add-ingredient-inline' },
-              React.createElement('input', {
-                type: 'text',
-                placeholder: 'Add...',
-                value: customIngredientText,
-                onChange: e => setCustomIngredientText(e.target.value),
-                onKeyDown: e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const val = customIngredientText.trim().toLowerCase();
-                    if (val && !activeIngredients.includes(val)) {
-                      setActiveIngredients(prev => [...prev, val]);
-                    }
-                    setCustomIngredientText('');
-                  }
-                }
-              }),
-              React.createElement('button', {
-                onClick: () => {
-                  const val = customIngredientText.trim().toLowerCase();
-                  if (val && !activeIngredients.includes(val)) {
-                    setActiveIngredients(prev => [...prev, val]);
-                  }
-                  setCustomIngredientText('');
-                }
-              }, '+')
+            React.createElement('div', { className: 'card-title' }, recipe.title),
+            React.createElement('div', { className: 'card-ingredients' },
+              recipe.ingredients.slice(0, 4).join(', ')
             )
           ),
-          React.createElement('div', { className: 'filter-divider' }),
-          React.createElement('div', { className: 'time-filter' },
-            React.createElement('label', null, '⏱ Time range'),
-            React.createElement('div', { className: 'double-slider-container' },
-              React.createElement('div', { className: 'double-slider-track' }),
-              React.createElement('div', {
-                className: 'double-slider-range',
-                style: {
-                  left: `${(minTime / 240) * 100}%`,
-                  right: `${100 - (maxTime / 240) * 100}%`
-                }
-              }),
-              React.createElement('input', {
-                type: 'range',
-                min: 0,
-                max: 240,
-                step: 5,
-                value: minTime,
-                className: 'double-slider-input',
-                onChange: e => {
-                  const val = Math.min(Number(e.target.value), maxTime - 10);
-                  setMinTime(val);
-                }
-              }),
-              React.createElement('input', {
-                type: 'range',
-                min: 0,
-                max: 240,
-                step: 5,
-                value: maxTime,
-                className: 'double-slider-input',
-                onChange: e => {
-                  const val = Math.max(Number(e.target.value), minTime + 10);
-                  setMaxTime(val);
-                }
-              })
-            ),
-            React.createElement('span', { className: 'time-values' },
-              `${minTime}m – ${maxTime === 240 ? '240m+' : maxTime + 'm'}`
+          React.createElement('div', { className: 'card-bottom' },
+            React.createElement('div', { className: 'card-time' }, '⏱ ', timeLabel(recipe.time)),
+            React.createElement('div', { className: 'card-actions' },
+              React.createElement('button', { className: `action-btn like${isLiked ? ' active' : ''}`, onClick: e => toggleLike(recipe.id, e), title: 'Like' }, '👍'),
+              React.createElement('button', { className: `action-btn dislike${isDisliked ? ' active' : ''}`, onClick: e => toggleDislike(recipe.id, e), title: 'Dislike' }, '👎'),
+              React.createElement('button', { className: `action-btn save${isSaved ? ' active' : ''}`, onClick: e => toggleSave(recipe, e), title: 'Save' }, '🔖'),
             )
-          ),
-          (activeCuisines.length > 0 || activeDiets.length > 0 || activeMethods.length > 0 || activeIngredients.length > 0 || minTime > 0 || maxTime < 240) &&
-            React.createElement('button', {
-              className: 'clear-filters',
-              onClick: () => { setActiveCuisines([]); setActiveDiets([]); setActiveMethods([]); setActiveIngredients([]); setMinTime(0); setMaxTime(240); }
-            }, '✕ Clear filters')
-        ),
-
-        // Results
-        React.createElement('div', { className: 'results-header' },
-          React.createElement('div', { className: 'results-count' },
-            React.createElement('strong', null, filteredRecipes.length),
-            ` recipe${filteredRecipes.length !== 1 ? 's' : ''} found`
           )
-        ),
+        );
+      }
 
-        filteredRecipes.length === 0
-          ? React.createElement('div', { className: 'no-results' },
-              React.createElement('div', { className: 'icon' }, '🍽'),
-              React.createElement('h3', null, 'No recipes match'),
-              React.createElement('p', null, 'Try adjusting your filters or search terms')
-            )
-          : React.createElement('div', null, // Wrapper div
-              React.createElement('div', { className: 'recipe-grid' },
-                // Slice the array to only show the visible count
-                ...filteredRecipes.slice(0, visibleCount).map(r => 
-                  React.createElement(RecipeCard, { key: r.id, recipe: r })
+      function RecipeModal({ recipe }) {
+        const isLiked = liked.includes(recipe.id);
+        const isDisliked = disliked.includes(recipe.id);
+        const isSaved = saved.some(s => s.id === recipe.id);
+        return React.createElement('div', { className: 'modal-overlay', onClick: e => e.target.classList.contains('modal-overlay') && setModalRecipe(null) },
+          React.createElement('div', { className: 'modal' },
+            React.createElement('div', { className: 'modal-header' },
+              React.createElement('div', { className: 'modal-header-left' },
+                React.createElement('div', { className: 'modal-meta' },
+                  React.createElement('span', { className: 'cuisine-badge' }, recipe.cuisine),
+                  React.createElement('span', { className: 'card-time' }, '⏱ ', timeLabel(recipe.time)),
+                  ...recipe.diet.map(d => React.createElement('span', { key: d, className: `diet-tag ${d}` }, d))
+                ),
+                React.createElement('div', { className: 'modal-title' }, recipe.title)
+              ),
+              React.createElement('button', { className: 'modal-close', onClick: () => setModalRecipe(null) }, '✕')
+            ),
+            React.createElement('div', { className: 'modal-body' },
+              React.createElement('div', { className: 'modal-section' },
+                React.createElement('div', { className: 'modal-section-title' }, 'Ingredients'),
+                React.createElement('div', { className: 'ingredients-grid' },
+                  ...recipe.ingredients.map((ing, i) =>
+                    React.createElement('div', { key: i, className: 'ingredient-item' }, ing)
+                  )
                 )
               ),
-              // The invisible sentinel element that triggers the next batch
-              visibleCount < filteredRecipes.length && 
-                React.createElement('div', { 
-                  ref: loadMoreRef, 
-                  style: { height: '20px', margin: '2rem 0' } 
+              React.createElement('div', { className: 'modal-section' },
+                React.createElement('div', { className: 'modal-section-title' }, 'Directions'),
+                React.createElement('div', { className: 'directions-list' },
+                  ...recipe.directions.map((step, i) =>
+                    React.createElement('div', { key: i, className: 'direction-step' },
+                      React.createElement('div', { className: 'step-num' }, i + 1),
+                      React.createElement('div', null, step)
+                    )
+                  )
+                )
+              )
+            ),
+            React.createElement('div', { className: 'modal-actions' },
+              React.createElement('button', { className: `modal-action-btn like${isLiked ? ' active' : ''}`, onClick: () => toggleLike(recipe.id) },
+                '👍 ', isLiked ? 'Liked' : 'Like'
+              ),
+              React.createElement('button', { className: `modal-action-btn dislike${isDisliked ? ' active' : ''}`, onClick: () => toggleDislike(recipe.id) },
+                '👎 ', isDisliked ? 'Disliked' : 'Dislike'
+              ),
+              React.createElement('button', { className: `modal-action-btn save${isSaved ? ' active' : ''}`, onClick: () => toggleSave(recipe) },
+                '🔖 ', isSaved ? 'Saved' : 'Save'
+              ),
+            )
+          )
+        );
+      }
+
+      function PrefsPanel() {
+        const savedRecipes = recipes.filter(r => saved.some(s => s.id === r.id));
+        const toggle = (arr, setter, val) =>
+          setter(prev => prev.includes(val) ? prev.filter(x => x !== val) : [...prev, val]);
+
+        return React.createElement('div', { className: 'prefs-panel' },
+          React.createElement('div', { className: 'prefs-header' },
+            React.createElement('h3', null, 'Your Preferences'),
+            React.createElement('button', { className: 'prefs-close', onClick: () => setShowPrefs(false) }, '✕')
+          ),
+          React.createElement('div', { className: 'prefs-section' },
+            React.createElement('h4', null, '🍽 Favourite Cuisines'),
+            React.createElement('div', { className: 'prefs-chips' },
+              ...allCuisines.map(c =>
+                React.createElement('button', {
+                  key: c, className: `prefs-chip${prefCuisines.includes(c) ? ' active-like' : ''}`,
+                  onClick: () => toggle(prefCuisines, setPrefCuisines, c)
+                }, c)
+              )
+            )
+          ),
+          React.createElement('div', { className: 'prefs-section' },
+            React.createElement('h4', null, '✅ Dietary Preferences'),
+            React.createElement('div', { className: 'prefs-chips' },
+              ...DIETS.map(d =>
+                React.createElement('button', {
+                  key: d, className: `prefs-chip${prefDiets.includes(d) ? ' active-like' : ''}`,
+                  onClick: () => toggle(prefDiets, setPrefDiets, d)
+                }, d)
+              )
+            )
+          ),
+          React.createElement('div', { className: 'prefs-section' },
+            React.createElement('h4', null, '🚫 Dietary Restrictions'),
+            React.createElement('div', { className: 'prefs-chips' },
+              ...DIETS.map(d =>
+                React.createElement('button', {
+                  key: d, className: `prefs-chip${restrictDiets.includes(d) ? ' active-restrict' : ''}`,
+                  onClick: () => toggle(restrictDiets, setRestrictDiets, d)
+                }, d)
+              )
+            )
+          ),
+          React.createElement('div', { className: 'prefs-section' },
+            React.createElement('h4', null, '🔖 Saved Recipes'),
+            savedRecipes.length === 0
+              ? React.createElement('p', { className: 'prefs-empty' }, 'No saved recipes yet')
+              : React.createElement('div', { className: 'saved-list' },
+                ...savedRecipes.map(r =>
+                  React.createElement('div', { key: r.id, className: 'saved-item', onClick: () => setModalRecipe(r) },
+                    React.createElement('div', { className: 'saved-item-title' }, r.title),
+                    React.createElement('button', {
+                      className: 'saved-item-remove',
+                      onClick: e => { e.stopPropagation(); toggleSave(r); }
+                    }, '✕')
+                  )
+                )
+              )
+          )
+        );
+      }
+
+      const SUGGESTIONS = [
+        'Quick weeknight dinner', 'High protein meal', 'Something vegan',
+        'Comfort food for winter', 'Easy 20-minute recipe', 'Impress guests with Italian'
+      ];
+
+      if (loading) {
+        return React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '1rem' } },
+          React.createElement('div', { style: { fontSize: '2rem' } }, '🍳'),
+          React.createElement('div', { style: { color: 'var(--accent)', fontFamily: 'DM Mono', fontSize: '0.85rem' } }, 'Loading recipes...')
+        );
+      }
+
+      return React.createElement('div', { className: 'app' },
+        // Header
+        React.createElement('header', { className: 'header' },
+          React.createElement('div', { className: 'logo' },
+            React.createElement('span', { className: 'logo-dot' }),
+            'Dishcover'
+          ),
+          React.createElement('div', { className: 'header-tabs' },
+            React.createElement('button', { className: `tab-btn${tab === 'search' ? ' active' : ''}`, onClick: () => setTab('search') }, '🔍 Search'),
+            React.createElement('button', { className: `tab-btn${tab === 'chat' ? ' active' : ''}`, onClick: () => setTab('chat') }, '✨ AI Chat'),
+          ),
+          React.createElement('div', { className: 'header-right' },
+            React.createElement('button', { className: 'prefs-btn', onClick: () => setShowPrefs(p => !p) },
+              '⚙ Preferences',
+              prefsCount > 0 && React.createElement('span', { className: 'prefs-count' }, prefsCount)
+            )
+          )
+        ),
+
+        // Main
+        React.createElement('main', { className: 'main' },
+
+          // ── SEARCH TAB ──
+          tab === 'search' && React.createElement('div', { className: 'search-view' },
+            React.createElement('div', { className: 'search-hero' },
+              React.createElement('h1', null, 'Find your next ', React.createElement('em', null, 'perfect'), ' dish'),
+              React.createElement('p', null, `${recipes.length} recipes from RecipeNLG · filter, discover, personalise`)
+            ),
+
+            // Search bar
+            React.createElement('div', { className: 'search-bar-wrap' },
+              React.createElement('div', { className: 'search-input-wrap' },
+                React.createElement('span', { className: 'search-icon' }, '🔍'),
+                React.createElement('input', {
+                  className: 'search-input',
+                  placeholder: 'Search by ingredient, dish, cuisine…',
+                  value: searchQuery,
+                  onChange: e => setSearchQuery(e.target.value),
+                  onKeyDown: e => e.key === 'Enter' && null
                 })
-            )
-      ),
+              ),
+              searchQuery && React.createElement('button', { className: 'search-btn', onClick: () => setSearchQuery(''), style: { background: 'var(--surface)', color: 'var(--text2)', border: '1px solid var(--border)' } }, 'Clear')
+            ),
 
-      // ── CHAT TAB ──
-      tab === 'chat' && React.createElement('div', { className: 'chat-view' },
-        indexingStatus !== 'ready'
-          ? React.createElement('div', { className: 'chat-welcome' },
-              React.createElement('div', { className: 'big-icon' }, '⚙️'),
-              React.createElement('h2', null, 'Preparing local search assistant...'),
-              React.createElement('p', null, 'Dishcover is indexing the recipes database to enable instant search. This will take only a moment.')
-            )
-          : React.createElement(React.Fragment, null,
-              React.createElement('div', { className: 'chat-messages' },
-                messages.length === 0 && React.createElement('div', { className: 'chat-welcome' },
-                  React.createElement('div', { className: 'big-icon' }, '✨'),
-                  React.createElement('h2', null, 'What are you craving?'),
-                  React.createElement('p', null, 'Ask me anything — I\'ll find the best matches from our recipe dataset using AI-powered search.')
+            // Filters
+            React.createElement('div', { className: 'filters-row' },
+              React.createElement('span', { className: 'filter-label' }, 'Cuisine'),
+              React.createElement('div', { className: 'filter-group' },
+                ...allCuisines.map(c =>
+                  React.createElement('button', {
+                    key: c, className: `filter-chip${activeCuisines.includes(c) ? ' active' : ''}`,
+                    onClick: () => setActiveCuisines(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])
+                  }, c)
+                )
+              ),
+              React.createElement('div', { className: 'filter-divider' }),
+              React.createElement('span', { className: 'filter-label' }, 'Diet'),
+              React.createElement('div', { className: 'filter-group' },
+                ...DIETS.map(d =>
+                  React.createElement('button', {
+                    key: d, className: `filter-chip${activeDiets.includes(d) ? ' active' : ''}`,
+                    onClick: () => setActiveDiets(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d])
+                  }, d)
+                )
+              ),
+              React.createElement('div', { className: 'filter-divider' }),
+              React.createElement('span', { className: 'filter-label' }, 'Method'),
+              React.createElement('div', { className: 'filter-group' },
+                ...METHODS.map(m =>
+                  React.createElement('button', {
+                    key: m, className: `filter-chip${activeMethods.includes(m) ? ' active' : ''}`,
+                    onClick: () => setActiveMethods(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
+                  }, m)
+                )
+              ),
+              React.createElement('div', { className: 'filter-divider' }),
+              React.createElement('span', { className: 'filter-label' }, 'Ingredients'),
+              React.createElement('div', { className: 'filter-group' },
+                ...COMMON_INGREDIENTS.map(ing =>
+                  React.createElement('button', {
+                    key: ing, className: `filter-chip${activeIngredients.includes(ing) ? ' active' : ''}`,
+                    onClick: () => setActiveIngredients(prev => prev.includes(ing) ? prev.filter(x => x !== ing) : [...prev, ing])
+                  }, ing)
                 ),
+                ...activeIngredients.filter(ing => !COMMON_INGREDIENTS.includes(ing)).map(ing =>
+                  React.createElement('button', {
+                    key: ing, className: 'filter-chip active',
+                    onClick: () => setActiveIngredients(prev => prev.filter(x => x !== ing))
+                  }, ing)
+                ),
+                React.createElement('div', { className: 'add-ingredient-inline' },
+                  React.createElement('input', {
+                    type: 'text',
+                    placeholder: 'Add...',
+                    value: customIngredientText,
+                    onChange: e => setCustomIngredientText(e.target.value),
+                    onKeyDown: e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = customIngredientText.trim().toLowerCase();
+                        if (val && !activeIngredients.includes(val)) {
+                          setActiveIngredients(prev => [...prev, val]);
+                        }
+                        setCustomIngredientText('');
+                      }
+                    }
+                  }),
+                  React.createElement('button', {
+                    onClick: () => {
+                      const val = customIngredientText.trim().toLowerCase();
+                      if (val && !activeIngredients.includes(val)) {
+                        setActiveIngredients(prev => [...prev, val]);
+                      }
+                      setCustomIngredientText('');
+                    }
+                  }, '+')
+                )
+              ),
+              React.createElement('div', { className: 'filter-divider' }),
+              React.createElement('div', { className: 'time-filter' },
+                React.createElement('label', null, '⏱ Time range'),
+                React.createElement('div', { className: 'double-slider-container' },
+                  React.createElement('div', { className: 'double-slider-track' }),
+                  React.createElement('div', {
+                    className: 'double-slider-range',
+                    style: {
+                      left: `${(minTime / 240) * 100}%`,
+                      right: `${100 - (maxTime / 240) * 100}%`
+                    }
+                  }),
+                  React.createElement('input', {
+                    type: 'range',
+                    min: 0,
+                    max: 240,
+                    step: 5,
+                    value: minTime,
+                    className: 'double-slider-input',
+                    onChange: e => {
+                      const val = Math.min(Number(e.target.value), maxTime - 10);
+                      setMinTime(val);
+                    }
+                  }),
+                  React.createElement('input', {
+                    type: 'range',
+                    min: 0,
+                    max: 240,
+                    step: 5,
+                    value: maxTime,
+                    className: 'double-slider-input',
+                    onChange: e => {
+                      const val = Math.max(Number(e.target.value), minTime + 10);
+                      setMaxTime(val);
+                    }
+                  })
+                ),
+                React.createElement('span', { className: 'time-values' },
+                  `${minTime}m – ${maxTime === 240 ? '240m+' : maxTime + 'm'}`
+                )
+              ),
+              (activeCuisines.length > 0 || activeDiets.length > 0 || activeMethods.length > 0 || activeIngredients.length > 0 || minTime > 0 || maxTime < 240) &&
+              React.createElement('button', {
+                className: 'clear-filters',
+                onClick: () => { setActiveCuisines([]); setActiveDiets([]); setActiveMethods([]); setActiveIngredients([]); setMinTime(0); setMaxTime(240); }
+              }, '✕ Clear filters')
+            ),
 
-                ...messages.map((msg, i) =>
-                  React.createElement('div', { key: i, className: `msg ${msg.role === 'user' ? 'user' : 'ai'}` },
-                    React.createElement('div', { className: 'msg-avatar' }, msg.role === 'user' ? '👤' : 'D'),
-                    React.createElement('div', { className: 'msg-body' },
-                      msg.role === 'assistant' && msg.recipes?.length > 0 &&
+            // Results
+            React.createElement('div', { className: 'results-header' },
+              React.createElement('div', { className: 'results-count' },
+                React.createElement('strong', null, filteredRecipes.length),
+                ` recipe${filteredRecipes.length !== 1 ? 's' : ''} found`
+              )
+            ),
+
+            filteredRecipes.length === 0
+              ? React.createElement('div', { className: 'no-results' },
+                React.createElement('div', { className: 'icon' }, '🍽'),
+                React.createElement('h3', null, 'No recipes match'),
+                React.createElement('p', null, 'Try adjusting your filters or search terms')
+              )
+              : React.createElement('div', null, // Wrapper div
+                React.createElement('div', { className: 'recipe-grid' },
+                  // Slice the array to only show the visible count
+                  ...filteredRecipes.slice(0, visibleCount).map(r =>
+                    React.createElement(RecipeCard, { key: r.id, recipe: r })
+                  )
+                ),
+                // The invisible sentinel element that triggers the next batch
+                visibleCount < filteredRecipes.length &&
+                React.createElement('div', {
+                  ref: loadMoreRef,
+                  style: { height: '20px', margin: '2rem 0' }
+                })
+              )
+          ),
+
+          // ── CHAT TAB ──
+          tab === 'chat' && React.createElement('div', { className: 'chat-view' },
+            indexingStatus !== 'ready'
+              ? React.createElement('div', { className: 'chat-welcome' },
+                React.createElement('div', { className: 'big-icon' }, '⚙️'),
+                React.createElement('h2', null, 'Preparing local search assistant...'),
+                React.createElement('p', null, 'Dishcover is indexing the recipes database to enable instant search. This will take only a moment.')
+              )
+              : React.createElement(React.Fragment, null,
+                React.createElement('div', { className: 'chat-messages' },
+                  messages.length === 0 && React.createElement('div', { className: 'chat-welcome' },
+                    React.createElement('div', { className: 'big-icon' }, '✨'),
+                    React.createElement('h2', null, 'What are you craving?'),
+                    React.createElement('p', null, 'Ask me anything — I\'ll find the best matches from our recipe dataset using AI-powered search.')
+                  ),
+
+                  ...messages.map((msg, i) =>
+                    React.createElement('div', { key: i, className: `msg ${msg.role === 'user' ? 'user' : 'ai'}` },
+                      React.createElement('div', { className: 'msg-avatar' }, msg.role === 'user' ? '👤' : 'D'),
+                      React.createElement('div', { className: 'msg-body' },
+                        msg.role === 'assistant' && msg.recipes?.length > 0 &&
                         React.createElement('div', { className: 'ai-reasoning' },
                           React.createElement('strong', null, '📊 Vector search:'),
                           ` found ${msg.recipes.length} relevant recipes from dataset`
                         ),
-                      React.createElement('div', { className: 'msg-bubble' }, msg.content),
-                      msg.role === 'assistant' && msg.recipes?.length > 0 &&
+                        React.createElement('div', { className: 'msg-bubble' }, msg.content),
+                        msg.role === 'assistant' && msg.recipes?.length > 0 &&
                         React.createElement('div', { className: 'chat-recipes' },
                           ...msg.recipes.map(r =>
                             React.createElement('div', { key: r.id, className: 'chat-recipe-card', onClick: () => setModalRecipe(r) },
@@ -1423,61 +2379,62 @@ function App() {
                             )
                           )
                         ),
-                      React.createElement('div', { className: 'msg-time' },
-                        new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        React.createElement('div', { className: 'msg-time' },
+                          new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        )
                       )
                     )
-                  )
+                  ),
+
+                  chatLoading && React.createElement('div', { className: 'msg ai' },
+                    React.createElement('div', { className: 'msg-avatar' }, 'D'),
+                    React.createElement('div', { className: 'msg-body' },
+                      React.createElement('div', { className: 'msg-bubble' }, React.createElement(TypingDots))
+                    )
+                  ),
+                  React.createElement('div', { ref: messagesEndRef })
                 ),
 
-                chatLoading && React.createElement('div', { className: 'msg ai' },
-                  React.createElement('div', { className: 'msg-avatar' }, 'D'),
-                  React.createElement('div', { className: 'msg-body' },
-                    React.createElement('div', { className: 'msg-bubble' }, React.createElement(TypingDots))
+                React.createElement('div', { className: 'chat-input-area' },
+                  messages.length === 0 && React.createElement('div', { className: 'chat-suggestions' },
+                    ...SUGGESTIONS.map(s =>
+                      React.createElement('button', { key: s, className: 'suggestion-pill', onClick: () => sendChat(s) }, s)
+                    )
+                  ),
+                  React.createElement('div', { className: 'chat-input-row' },
+                    React.createElement('textarea', {
+                      className: 'chat-input',
+                      rows: 1,
+                      placeholder: 'Ask for recipes, e.g. "Quick vegan dinner with chickpeas"…',
+                      value: chatInput,
+                      onChange: e => setChatInput(e.target.value),
+                      onKeyDown: handleChatKey
+                    }),
+                    React.createElement('button', {
+                      className: 'chat-send',
+                      onClick: () => sendChat(chatInput),
+                      disabled: chatLoading || !chatInput.trim()
+                    }, '➤')
                   )
-                ),
-                React.createElement('div', { ref: messagesEndRef })
-              ),
-
-              React.createElement('div', { className: 'chat-input-area' },
-                messages.length === 0 && React.createElement('div', { className: 'chat-suggestions' },
-                  ...SUGGESTIONS.map(s =>
-                    React.createElement('button', { key: s, className: 'suggestion-pill', onClick: () => sendChat(s) }, s)
-                  )
-                ),
-                React.createElement('div', { className: 'chat-input-row' },
-                  React.createElement('textarea', {
-                    className: 'chat-input',
-                    rows: 1,
-                    placeholder: 'Ask for recipes, e.g. "Quick vegan dinner with chickpeas"…',
-                    value: chatInput,
-                    onChange: e => setChatInput(e.target.value),
-                    onKeyDown: handleChatKey
-                  }),
-                  React.createElement('button', {
-                    className: 'chat-send',
-                    onClick: () => sendChat(chatInput),
-                    disabled: chatLoading || !chatInput.trim()
-                  }, '➤')
                 )
               )
-            )
-      )
-    ),
+          )
+        ),
 
-    // Modal
-    modalRecipe && React.createElement(RecipeModal, { recipe: modalRecipe }),
+        // Modal
+        modalRecipe && React.createElement(RecipeModal, { recipe: modalRecipe }),
 
-    // Prefs
-    showPrefs && React.createElement(PrefsPanel),
+        // Prefs
+        showPrefs && React.createElement(PrefsPanel),
 
-    // Toast
-    toast && React.createElement('div', { className: 'toast' }, toast)
-  );
-}
+        // Toast
+        toast && React.createElement('div', { className: 'toast' }, toast)
+      );
+    }
 
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
-</script>
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  </script>
 </body>
+
 </html>
