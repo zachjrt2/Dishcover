@@ -238,6 +238,51 @@
     padding: 5px 10px; border-radius: 50px; transition: background 0.15s;
   }
   .clear-filters:hover { background: var(--red-dim); }
+  .add-ingredient-inline {
+    display: inline-flex;
+    align-items: center;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 2px 4px 2px 10px;
+    height: 26px;
+    transition: border-color 0.15s;
+    vertical-align: middle;
+  }
+  .add-ingredient-inline:focus-within {
+    border-color: var(--accent);
+  }
+  .add-ingredient-inline input {
+    background: none;
+    border: none;
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.76rem;
+    color: var(--text);
+    width: 80px;
+  }
+  .add-ingredient-inline input::placeholder {
+    color: var(--text3);
+  }
+  .add-ingredient-inline button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: background 0.15s;
+    padding: 0;
+  }
+  .add-ingredient-inline button:hover {
+    background: var(--accent-2);
+  }
 
   /* Results */
   .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
@@ -656,6 +701,7 @@ function App() {
   const [vocab, setVocab] = useState({});
   const [idf, setIdf] = useState({});
   const [loading, setLoading] = useState(true);
+  const [indexingStatus, setIndexingStatus] = useState('idle');
 
   // UI state
   const [tab, setTab] = useState('search');
@@ -667,6 +713,8 @@ function App() {
   const [activeCuisines, setActiveCuisines] = useState([]);
   const [activeDiets, setActiveDiets] = useState([]);
   const [activeMethods, setActiveMethods] = useState([]);
+  const [activeIngredients, setActiveIngredients] = useState([]);
+  const [customIngredientText, setCustomIngredientText] = useState('');
   const [minTime, setMinTime] = useState(0);
   const [maxTime, setMaxTime] = useState(240);
 
@@ -696,10 +744,8 @@ function App() {
   useEffect(() => { localStorage.setItem('dc_restrictDiets', JSON.stringify(restrictDiets)); }, [restrictDiets]);
 
   // ── Load dataset ──
-  // ── Load dataset ──
   useEffect(() => {
     fetch('recipes.json').then(r => r.json()).then(rawData => {
-      
       // 1. Convert the JSON object into an array and map the fields
       const data = Object.entries(rawData).map(([id, item]) => {
         const title = item.title || 'Untitled Recipe';
@@ -728,36 +774,53 @@ function App() {
         };
       });
 
-      // 3. Rebuild IDF/Vocab for the text-search engine
-      const df = {};
-      const N = data.length;
-      data.forEach(r => {
-        const seen = new Set();
-        const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.directions.join(' ');
-        tokenize(text).forEach(t => {
-          if (!seen.has(t)) { df[t] = (df[t] || 0) + 1; seen.add(t); }
-        });
-      });
-
-      const idfMap = {};
-      const sortedTokens = Object.keys(df).sort();
-      const v2i = {};
-      
-      sortedTokens.forEach((t, i) => { 
-        idfMap[t] = Math.log((N + 1) / (df[t] + 1));
-        v2i[t] = i; 
-      });
-
-      // Calculate embeddings for all recipes using the computed idfMap and v2i
-      data.forEach(r => {
-        const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.diet.join(' ');
-        r.embedding = buildQueryEmbedding(text, idfMap, v2i);
-      });
-
-      setVocab(v2i);
-      setIdf(idfMap);
+      // Show Search tab UI instantly
       setRecipes(data);
       setLoading(false);
+      setIndexingStatus('indexing');
+
+      // 3. Compute IDF/Vocab and Embeddings asynchronously in chunks
+      setTimeout(() => {
+        const df = {};
+        const N = data.length;
+        data.forEach(r => {
+          const seen = new Set();
+          const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.directions.join(' ');
+          tokenize(text).forEach(t => {
+            if (!seen.has(t)) { df[t] = (df[t] || 0) + 1; seen.add(t); }
+          });
+        });
+
+        const idfMap = {};
+        const sortedTokens = Object.keys(df).sort();
+        const v2i = {};
+        sortedTokens.forEach((t, i) => { 
+          idfMap[t] = Math.log((N + 1) / (df[t] + 1));
+          v2i[t] = i; 
+        });
+
+        setVocab(v2i);
+        setIdf(idfMap);
+
+        // Calculate embeddings in chunks to avoid blocking render thread
+        let index = 0;
+        const chunkSize = 500;
+        function processNextChunk() {
+          const end = Math.min(index + chunkSize, data.length);
+          for (let i = index; i < end; i++) {
+            const r = data[i];
+            const text = r.title + ' ' + r.ingredients.join(' ') + ' ' + r.cuisine + ' ' + r.diet.join(' ');
+            r.embedding = buildQueryEmbedding(text, idfMap, v2i);
+          }
+          index = end;
+          if (index < data.length) {
+            setTimeout(processNextChunk, 15);
+          } else {
+            setIndexingStatus('ready');
+          }
+        }
+        processNextChunk();
+      }, 60);
     });
   }, []);
 
@@ -778,6 +841,7 @@ function App() {
 
   const DIETS = ['vegan', 'vegetarian', 'gluten-free'];
   const METHODS = ['instant pot', 'oven', 'crock pot', 'air fryer', 'slow cooker', 'grill', 'stove'];
+  const COMMON_INGREDIENTS = ['chicken', 'beef', 'cheese', 'tomato', 'onion', 'garlic', 'lemon', 'rice'];
 
   // ── Filtered recipes ──
   const filteredRecipes = useMemo(() => {
@@ -812,6 +876,15 @@ function App() {
           r.title.toLowerCase().includes(m) ||
           r.ingredients.some(ing => ing.toLowerCase().includes(m)) ||
           r.directions.some(step => step.toLowerCase().includes(m))
+        )
+      );
+    }
+    
+    // Filter by active ingredients
+    if (activeIngredients.length > 0) {
+      results = results.filter(r =>
+        activeIngredients.every(ing =>
+          r.ingredients.some(ri => ri.toLowerCase().includes(ing))
         )
       );
     }
@@ -856,13 +929,14 @@ function App() {
     disliked,
     prefCuisines,
     prefDiets,
-    restrictDiets
+    restrictDiets,
+    activeIngredients
   ]);
 
   // ── Infinite scroll loading logic ──
   useEffect(() => {
     setVisibleCount(24);
-  }, [searchQuery, activeCuisines, activeDiets, activeMethods, minTime, maxTime, restrictDiets]);
+  }, [searchQuery, activeCuisines, activeDiets, activeMethods, activeIngredients, minTime, maxTime, restrictDiets]);
 
   useEffect(() => {
     if (!loadMoreRef.current) return;
@@ -1185,6 +1259,49 @@ function App() {
             )
           ),
           React.createElement('div', { className: 'filter-divider' }),
+          React.createElement('span', { className: 'filter-label' }, 'Ingredients'),
+          React.createElement('div', { className: 'filter-group' },
+            ...COMMON_INGREDIENTS.map(ing =>
+              React.createElement('button', {
+                key: ing, className: `filter-chip${activeIngredients.includes(ing) ? ' active' : ''}`,
+                onClick: () => setActiveIngredients(prev => prev.includes(ing) ? prev.filter(x => x !== ing) : [...prev, ing])
+              }, ing)
+            ),
+            ...activeIngredients.filter(ing => !COMMON_INGREDIENTS.includes(ing)).map(ing =>
+              React.createElement('button', {
+                key: ing, className: 'filter-chip active',
+                onClick: () => setActiveIngredients(prev => prev.filter(x => x !== ing))
+              }, ing)
+            ),
+            React.createElement('div', { className: 'add-ingredient-inline' },
+              React.createElement('input', {
+                type: 'text',
+                placeholder: 'Add...',
+                value: customIngredientText,
+                onChange: e => setCustomIngredientText(e.target.value),
+                onKeyDown: e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = customIngredientText.trim().toLowerCase();
+                    if (val && !activeIngredients.includes(val)) {
+                      setActiveIngredients(prev => [...prev, val]);
+                    }
+                    setCustomIngredientText('');
+                  }
+                }
+              }),
+              React.createElement('button', {
+                onClick: () => {
+                  const val = customIngredientText.trim().toLowerCase();
+                  if (val && !activeIngredients.includes(val)) {
+                    setActiveIngredients(prev => [...prev, val]);
+                  }
+                  setCustomIngredientText('');
+                }
+              }, '+')
+            )
+          ),
+          React.createElement('div', { className: 'filter-divider' }),
           React.createElement('div', { className: 'time-filter' },
             React.createElement('label', null, '⏱ Time range'),
             React.createElement('div', { className: 'double-slider-container' },
@@ -1225,10 +1342,10 @@ function App() {
               `${minTime}m – ${maxTime === 240 ? '240m+' : maxTime + 'm'}`
             )
           ),
-          (activeCuisines.length > 0 || activeDiets.length > 0 || activeMethods.length > 0 || minTime > 0 || maxTime < 240) &&
+          (activeCuisines.length > 0 || activeDiets.length > 0 || activeMethods.length > 0 || activeIngredients.length > 0 || minTime > 0 || maxTime < 240) &&
             React.createElement('button', {
               className: 'clear-filters',
-              onClick: () => { setActiveCuisines([]); setActiveDiets([]); setActiveMethods([]); setMinTime(0); setMaxTime(240); }
+              onClick: () => { setActiveCuisines([]); setActiveDiets([]); setActiveMethods([]); setActiveIngredients([]); setMinTime(0); setMaxTime(240); }
             }, '✕ Clear filters')
         ),
 
@@ -1264,79 +1381,87 @@ function App() {
 
       // ── CHAT TAB ──
       tab === 'chat' && React.createElement('div', { className: 'chat-view' },
-        React.createElement('div', { className: 'chat-messages' },
-          messages.length === 0 && React.createElement('div', { className: 'chat-welcome' },
-            React.createElement('div', { className: 'big-icon' }, '✨'),
-            React.createElement('h2', null, 'What are you craving?'),
-            React.createElement('p', null, 'Ask me anything — I\'ll find the best matches from our recipe dataset using AI-powered search.')
-          ),
+        indexingStatus !== 'ready'
+          ? React.createElement('div', { className: 'chat-welcome' },
+              React.createElement('div', { className: 'big-icon' }, '⚙️'),
+              React.createElement('h2', null, 'Preparing local search assistant...'),
+              React.createElement('p', null, 'Dishcover is indexing the recipes database to enable instant search. This will take only a moment.')
+            )
+          : React.createElement(React.Fragment, null,
+              React.createElement('div', { className: 'chat-messages' },
+                messages.length === 0 && React.createElement('div', { className: 'chat-welcome' },
+                  React.createElement('div', { className: 'big-icon' }, '✨'),
+                  React.createElement('h2', null, 'What are you craving?'),
+                  React.createElement('p', null, 'Ask me anything — I\'ll find the best matches from our recipe dataset using AI-powered search.')
+                ),
 
-          ...messages.map((msg, i) =>
-            React.createElement('div', { key: i, className: `msg ${msg.role === 'user' ? 'user' : 'ai'}` },
-              React.createElement('div', { className: 'msg-avatar' }, msg.role === 'user' ? '👤' : 'D'),
-              React.createElement('div', { className: 'msg-body' },
-                msg.role === 'assistant' && msg.recipes?.length > 0 &&
-                  React.createElement('div', { className: 'ai-reasoning' },
-                    React.createElement('strong', null, '📊 Vector search:'),
-                    ` found ${msg.recipes.length} relevant recipes from dataset`
-                  ),
-                React.createElement('div', { className: 'msg-bubble' }, msg.content),
-                msg.role === 'assistant' && msg.recipes?.length > 0 &&
-                  React.createElement('div', { className: 'chat-recipes' },
-                    ...msg.recipes.map(r =>
-                      React.createElement('div', { key: r.id, className: 'chat-recipe-card', onClick: () => setModalRecipe(r) },
-                        React.createElement('div', { className: 'chat-recipe-left' },
-                          React.createElement('div', { className: 'chat-recipe-title' }, r.title),
-                          React.createElement('div', { className: 'chat-recipe-meta' },
-                            React.createElement('span', { className: 'cuisine-badge' }, r.cuisine),
-                            React.createElement('span', { className: 'card-time' }, '⏱ ', timeLabel(r.time)),
-                            r.similarity !== undefined && React.createElement('span', { className: 'chat-recipe-score' },
-                              `${(r.similarity * 100).toFixed(0)}% match`
+                ...messages.map((msg, i) =>
+                  React.createElement('div', { key: i, className: `msg ${msg.role === 'user' ? 'user' : 'ai'}` },
+                    React.createElement('div', { className: 'msg-avatar' }, msg.role === 'user' ? '👤' : 'D'),
+                    React.createElement('div', { className: 'msg-body' },
+                      msg.role === 'assistant' && msg.recipes?.length > 0 &&
+                        React.createElement('div', { className: 'ai-reasoning' },
+                          React.createElement('strong', null, '📊 Vector search:'),
+                          ` found ${msg.recipes.length} relevant recipes from dataset`
+                        ),
+                      React.createElement('div', { className: 'msg-bubble' }, msg.content),
+                      msg.role === 'assistant' && msg.recipes?.length > 0 &&
+                        React.createElement('div', { className: 'chat-recipes' },
+                          ...msg.recipes.map(r =>
+                            React.createElement('div', { key: r.id, className: 'chat-recipe-card', onClick: () => setModalRecipe(r) },
+                              React.createElement('div', { className: 'chat-recipe-left' },
+                                React.createElement('div', { className: 'chat-recipe-title' }, r.title),
+                                React.createElement('div', { className: 'chat-recipe-meta' },
+                                  React.createElement('span', { className: 'cuisine-badge' }, r.cuisine),
+                                  React.createElement('span', { className: 'card-time' }, '⏱ ', timeLabel(r.time)),
+                                  r.similarity !== undefined && React.createElement('span', { className: 'chat-recipe-score' },
+                                    `${(r.similarity * 100).toFixed(0)}% match`
+                                  )
+                                )
+                              ),
+                              React.createElement('button', { className: 'chat-recipe-open', onClick: e => { e.stopPropagation(); setModalRecipe(r); } }, 'View →')
                             )
                           )
                         ),
-                        React.createElement('button', { className: 'chat-recipe-open', onClick: e => { e.stopPropagation(); setModalRecipe(r); } }, 'View →')
+                      React.createElement('div', { className: 'msg-time' },
+                        new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                       )
                     )
-                  ),
-                React.createElement('div', { className: 'msg-time' },
-                  new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  )
+                ),
+
+                chatLoading && React.createElement('div', { className: 'msg ai' },
+                  React.createElement('div', { className: 'msg-avatar' }, 'D'),
+                  React.createElement('div', { className: 'msg-body' },
+                    React.createElement('div', { className: 'msg-bubble' }, React.createElement(TypingDots))
+                  )
+                ),
+                React.createElement('div', { ref: messagesEndRef })
+              ),
+
+              React.createElement('div', { className: 'chat-input-area' },
+                messages.length === 0 && React.createElement('div', { className: 'chat-suggestions' },
+                  ...SUGGESTIONS.map(s =>
+                    React.createElement('button', { key: s, className: 'suggestion-pill', onClick: () => sendChat(s) }, s)
+                  )
+                ),
+                React.createElement('div', { className: 'chat-input-row' },
+                  React.createElement('textarea', {
+                    className: 'chat-input',
+                    rows: 1,
+                    placeholder: 'Ask for recipes, e.g. "Quick vegan dinner with chickpeas"…',
+                    value: chatInput,
+                    onChange: e => setChatInput(e.target.value),
+                    onKeyDown: handleChatKey
+                  }),
+                  React.createElement('button', {
+                    className: 'chat-send',
+                    onClick: () => sendChat(chatInput),
+                    disabled: chatLoading || !chatInput.trim()
+                  }, '➤')
                 )
               )
             )
-          ),
-
-          chatLoading && React.createElement('div', { className: 'msg ai' },
-            React.createElement('div', { className: 'msg-avatar' }, 'D'),
-            React.createElement('div', { className: 'msg-body' },
-              React.createElement('div', { className: 'msg-bubble' }, React.createElement(TypingDots))
-            )
-          ),
-          React.createElement('div', { ref: messagesEndRef })
-        ),
-
-        React.createElement('div', { className: 'chat-input-area' },
-          messages.length === 0 && React.createElement('div', { className: 'chat-suggestions' },
-            ...SUGGESTIONS.map(s =>
-              React.createElement('button', { key: s, className: 'suggestion-pill', onClick: () => sendChat(s) }, s)
-            )
-          ),
-          React.createElement('div', { className: 'chat-input-row' },
-            React.createElement('textarea', {
-              className: 'chat-input',
-              rows: 1,
-              placeholder: 'Ask for recipes, e.g. "Quick vegan dinner with chickpeas"…',
-              value: chatInput,
-              onChange: e => setChatInput(e.target.value),
-              onKeyDown: handleChatKey
-            }),
-            React.createElement('button', {
-              className: 'chat-send',
-              onClick: () => sendChat(chatInput),
-              disabled: chatLoading || !chatInput.trim()
-            }, '➤')
-          )
-        )
       )
     ),
 
