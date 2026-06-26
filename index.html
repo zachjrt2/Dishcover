@@ -914,76 +914,19 @@ function App() {
   const prefsCount = prefCuisines.length + prefDiets.length + restrictDiets.length + saved.length;
 
   // ── Chat send ──
-  const sendChat = useCallback(async (text) => {
+  const sendChat = useCallback((text) => {
     if (!text.trim() || chatLoading) return;
     const userMsg = { role: 'user', content: text, time: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setChatLoading(true);
 
-    // Find matching recipes via embedding
-    const matches = vectorSearch(text, 6);
-
-    // Build context for the AI
-    const recipeContext = matches.map((r, i) =>
-      `Recipe ${i+1}: "${r.title}" (${r.cuisine}, ${r.time} min${r.diet.length ? ', ' + r.diet.join('/') : ''})
-Ingredients: ${r.ingredients.slice(0, 5).join(', ')}${r.ingredients.length > 5 ? '...' : ''}
-Similarity: ${(r.similarity * 100).toFixed(0)}%`
-    ).join('\n\n');
-
-    const userPrefsContext = [
-      prefCuisines.length ? `User prefers: ${prefCuisines.join(', ')} cuisine` : '',
-      prefDiets.length ? `User likes: ${prefDiets.join(', ')} options` : '',
-      restrictDiets.length ? `User restricts: ${restrictDiets.join(', ')}` : '',
-    ].filter(Boolean).join('. ');
-
-    const systemPrompt = `You are Dishcover, an AI recipe assistant. You ONLY recommend recipes from the provided dataset results — never invent or hallucinate recipes.
-
-User preferences: ${userPrefsContext || 'None set'}
-
-Retrieved recipes from dataset (by vector similarity):
-${recipeContext}
-
-Rules:
-1. Only reference the recipes listed above — these are real dataset results
-2. Recommend 2-4 of the best matches for the user's query
-3. Give brief reasoning (1-2 sentences) explaining why they match
-4. If suggesting substitutions, keep them minor and practical
-5. Format: Start with a short reasoning paragraph, then list the recommended recipe titles exactly as given
-6. Keep responses concise and warm
-7. If no recipes match well (all similarities near 0), say so honestly`;
-
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: [
-            ...messages.slice(-6).map(m => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content })),
-            { role: 'user', content: text }
-          ]
-        })
-      });
-      const data = await res.json();
-      const aiText = data.content?.[0]?.text || 'Sorry, I had trouble thinking through that. Try rephrasing?';
-
-      // Match mentioned titles back to recipe objects
-      const mentionedRecipes = matches.filter(r =>
-        aiText.toLowerCase().includes(r.title.toLowerCase().slice(0, 15))
-      ).slice(0, 4);
-
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: aiText,
-        recipes: mentionedRecipes.length > 0 ? mentionedRecipes : matches.slice(0, 3),
-        time: new Date()
-      }]);
-    } catch (err) {
+    // Simulate thinking delay (450ms) for natural feel
+    setTimeout(() => {
+      const matches = vectorSearch(text, 6);
       const queryLower = text.toLowerCase();
-      let responseText = `I've analyzed our dataset of ${recipes.length} recipes. Here are the top matches that best fit your request for "${text}":`;
+      
+      let responseText = `I've searched our dataset of ${recipes.length} recipes. Based on local semantic similarity, here are the best matches for "${text}":`;
       if (queryLower.includes('vegan')) {
         responseText = `Here are the top vegan recipes I found matching "${text}" from our database:`;
       } else if (queryLower.includes('vegetarian')) {
@@ -999,7 +942,7 @@ Rules:
         recipes: matches.slice(0, 4),
         time: new Date()
       }]);
-    }
+    }, 450);
     setChatLoading(false);
   }, [chatLoading, messages, vectorSearch, prefCuisines, prefDiets, restrictDiets]);
 
